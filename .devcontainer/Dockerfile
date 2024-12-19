@@ -12,4 +12,4 @@ WORKDIR /workspace
 
 # Install Python dependencies
 COPY requirements.txt /workspace/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN source /workspaces/venv/bin/activate && pip install --no-cache-dir -r requirements.txt

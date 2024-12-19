@@ -26,6 +26,5 @@
         ]
       }
     }
-  },
-  "onCreateCommand": ".devcontainer/on-create-command.sh"
+  }
 }
