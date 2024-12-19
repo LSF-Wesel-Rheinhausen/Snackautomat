@@ -11,23 +11,21 @@
     }
   },
   "customizations": {
+  "features": {
+    "ghcr.io/devcontainers/features/sshd:1": {
+        "version": "latest"
+    }
+    }
     "vscode": {
       "settings": {
-        "python.pythonPath": "/usr/local/bin/python"
-      },
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance"
-      ]
-    },
-    "intelliJ": {
-      "enabled": true
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
+        "python.terminal.activateEnvInCurrentTerminal": true,
+        "python.terminal.launchArgs": [
+          "-X",
+          "dev"
+        ]
+      }
     }
   },
-  "forwardPorts": [5000, 22],
-  "postCreateCommand": "pip install -r requirements.txt",
-  "mounts": [
-    "source=${localWorkspaceFolder}/config,target=/workspace/config,type=bind"
-  ],
-  "remoteUser": "vscode"
+  "onCreateCommand": ".devcontainer/on-create-command.sh"
 }
