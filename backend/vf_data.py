@@ -259,7 +259,7 @@ def get_valid_fu_products():
          >>> print(valid_articles)
      """
     today = datetime.now().date()
-    articles = getFUProducts()
+    articles = get_fu_products()
     filtered_articles = {}
 
     for item_id, details in articles.items():

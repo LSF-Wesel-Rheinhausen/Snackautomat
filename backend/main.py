@@ -11,17 +11,13 @@ load_dotenv()
 app = Flask(__name__, static_url_path='/static')
 Talisman(app)
 
-@app.route('/getVFID', methods=['GET'])
-def get_vfid():
-    return vf_data.get_vfid("jan", "sellerbeck")
-
 @app.route('/getAllProducts', methods=['GET'])
 def get_all_products():
     return vf_data.get_shop_items()
 
 @app.route('/getFUProducts', methods=['GET'])
 def get_fu_products():
-    return vf_data.getFUProducts()
+    return vf_data.get_fu_products()
 
 @app.route('/getValidFUProducts', methods=['GET'])
 def get_valid_f_products():
