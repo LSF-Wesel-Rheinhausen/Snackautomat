@@ -1,7 +1,10 @@
 import serial
 from serial.tools import list_ports
-import time
+#import RPi.gpio
 from concurrent.futures import ThreadPoolExecutor
+
+def relay(row):
+    print(row)
 
 
 def check_port_for_grbl(port, axis):
@@ -14,17 +17,50 @@ def check_port_for_grbl(port, axis):
             if any(b"Grbl" in line for line in response):
                 print(f"Connected to GRBL on port: {port.device}")
                 try:
-                    if axis == "X":
-                        ser.write(b"$J=G21G91X0.8F60\r\n")
-                    elif axis == "Y":
-                        ser.write(b"$J=G21G91Y0.8F60\r\n")
-                    elif axis == "Z":
-                        ser.write(b"$J=G21G91Z0.8F60\r\n")
-                    elif axis == "A":
-                        ser.write(b"$J=G21G91A0.8F60\r\n")
+                    match axis:
+                        case "1":
+                            relay(1)
+                            ser.write(b"$J=G21G91X0.8F60\r\n")
+                        case "2":
+                            relay(1)
+                            ser.write(b"$J=G21G91Y0.8F60\r\n")
+                        case "3":
+                            relay(1)
+                            ser.write(b"$J=G21G91Z0.8F60\r\n")
+                        case "4":
+                            relay(1)
+                            ser.write(b"$J=G21G91A0.8F60\r\n")
+                        case "5":
+                            relay(2)
+                            ser.write(b"$J=G21G91X0.8F60\r\n")
+                        case "6":
+                            relay(2)
+                            ser.write(b"$J=G21G91Y0.8F60\r\n")
+                        case "7":
+                            relay(2)
+                            ser.write(b"$J=G21G91Z0.8F60\r\n")
+                        case "8":
+                            relay(2)
+                            ser.write(b"$J=G21G91A0.8F60\r\n")
+                        case "9":
+                            relay(3)
+                            ser.write(b"$J=G21G91X0.8F60\r\n")
+                        case "10":
+                            relay(3)
+                            ser.write(b"$J=G21G91Y0.8F60\r\n")
+                        case "11":
+                            relay(3)
+                            ser.write(b"$J=G21G91Z0.8F60\r\n")
+                        case "12":
+                            relay(3)
+                            ser.write(b"$J=G21G91A0.8F60\r\n")
                     if ser.readline() == b"ok\r\n":
                         print("Turned successfully")
                         ser.close()
+                    else:
+                        print("Failed to get response")
+                        ser.close()
+                        raise ConnectionError("Failed to get response from Arduino")
                 except Exception as e:
                     print(e)
                 return port.device  # Return the port if GRBL is detected
