@@ -46,6 +46,16 @@ def test_buy():
     return response
 
 
+@app.route('/testBuyNr1', methods=['POST'])
+def test_buy_nr1():
+    data = request.get_json()
+    row = data.get('row')
+    valid_products = vf_data.get_valid_fu_products()
+    for product_id, product_details in valid_products.items():
+        if f'[{row}]' in product_details.get('designation', ''):
+            return product_details
+        return "No product found with designation containing {1}"
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True, host="0.0.0.0", port=8123)
