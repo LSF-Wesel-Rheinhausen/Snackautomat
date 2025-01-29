@@ -46,8 +46,8 @@ def test_buy():
     return response
 
 
-@app.route('/testBuyNr1', methods=['POST'])
-def test_buy_nr1():
+@app.route('/getSpecificProduct', methods=['POST'])
+def getProduct():
     data = request.get_json()
     row = data.get('row')
     valid_products = vf_data.get_valid_fu_products()
