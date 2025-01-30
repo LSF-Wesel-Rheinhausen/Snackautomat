@@ -3,32 +3,39 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_httpauth import HTTPBasicAuth
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 from flask_talisman import Talisman
 import logging
 import vf_data
-from dotenv import load_dotenv
-load_dotenv()
+import os
 app = Flask(__name__, static_url_path='/static')
-Talisman(app)
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
+jwt = JWTManager(app)
 
 @app.route('/getAllProducts', methods=['GET'])
+@jwt_required()
 def get_all_products():
     return vf_data.get_shop_items()
 
 @app.route('/getFUProducts', methods=['GET'])
+@jwt_required()
 def get_fu_products():
     return vf_data.get_fu_products()
 
 @app.route('/getValidFUProducts', methods=['GET'])
+@jwt_required()
 def get_valid_f_products():
     return vf_data.get_valid_fu_products()
 
 
 @app.route('/test', methods=['POST'])
+@jwt_required()
 def test():
     return "Hello World"
 
 @app.route('/Buy', methods=['POST'])
+@jwt_required()
 def test_buy():
     data = request.get_json()
     memberid = data.get('memberid')
@@ -47,12 +54,14 @@ def test_buy():
         return {"message": "Invalid item"}, 400
 
 @app.route('/getUserInfo', methods=['POST'])
+@jwt_required()
 def get_user_info():
     data = request.get_json()
     memberid = data.get('rfid_id')
     return vf_data.get_user_info(memberid)
 
 @app.route('/getSpecificProduct', methods=['POST'])
+@jwt_required()
 def get_product():
     data = request.get_json()
     row = data.get('row')
