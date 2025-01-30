@@ -70,7 +70,7 @@ def get_product():
     for product_id, product_details in valid_products.items():
         if f'[{row}]' in product_details.get('designation', ''):
             return product_details
-        return "No product found with designation containing {1}"
+        return "False"
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
