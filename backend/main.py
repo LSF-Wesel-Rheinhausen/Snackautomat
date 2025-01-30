@@ -45,6 +45,11 @@ def test_buy():
     response = vf_data.set_new_sale(buyer,1,valid_item)
     return response
 
+@app.route('/getUserInfo', methods=['POST'])
+def get_user_info():
+    data = request.get_json()
+    memberid = data.get('rfid_id')
+    return vf_data.get_user_info(memberid)
 
 @app.route('/getSpecificProduct', methods=['POST'])
 def getProduct():

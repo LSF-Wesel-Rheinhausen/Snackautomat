@@ -313,3 +313,14 @@ def set_new_sale(buyer, amount, item):
     except ConnectionError:
         logging.error("Error while getting shop_items")
         return CON_ERROR
+
+
+def get_user_info(keyname):
+    with open('token.json', 'r') as file:
+        users = json.load(file)
+    for user in users:
+        for key in user.get('keymanagement', []):
+            if key.get('keyname') == keyname:
+                return user
+
+    return {"message": "User not found"}
