@@ -28,22 +28,23 @@ def get_valid_f_products():
 def test():
     return "Hello World"
 
-@app.route('/testBuy', methods=['GET'])
+@app.route('/Buy', methods=['POST'])
 def test_buy():
+    data = request.get_json()
+    memberid = data.get('memberid')
+    itemid = data.get('itemid')
+    amount = data.get('amount')
     buyer = {
-        "memberid": 317179,
+        "memberid": memberid,
     }
     valid_items = vf_data.get_valid_fu_products()  # Fetches valid items for today's date based on your method
-
-# Fetch the first valid item (if available)
-    if valid_items:
-        valid_item = next(iter(valid_items.values()))
+    # Check if the requested item is in the list of valid items
+    valid_item = valid_items.get(itemid)
+    if valid_item:
+        response = vf_data.set_new_sale(buyer, amount, valid_item)
+        return response
     else:
-        valid_item = None  # No valid items found
-
-
-    response = vf_data.set_new_sale(buyer,1,valid_item)
-    return response
+        return {"message": "Invalid item"}, 400
 
 @app.route('/getUserInfo', methods=['POST'])
 def get_user_info():
@@ -52,7 +53,7 @@ def get_user_info():
     return vf_data.get_user_info(memberid)
 
 @app.route('/getSpecificProduct', methods=['POST'])
-def getProduct():
+def get_product():
     data = request.get_json()
     row = data.get('row')
     valid_products = vf_data.get_valid_fu_products()
