@@ -12,6 +12,7 @@ app = Flask(__name__, static_url_path='/static')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 jwt = JWTManager(app)
+Talisman(app)
 
 @app.route('/getAllProducts', methods=['GET'])
 @jwt_required()
