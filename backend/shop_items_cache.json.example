@@ -1,0 +1,21 @@
+{
+  "timestamp": 1738187417.489565,
+  "data": {
+    "25137": {
+      "articleid": "001",
+      "designation": "Designation",
+      "unittype": "Stück",
+      "costtype": "",
+      "spid": "0",
+      "account": "1234",
+      "prices": [
+        {
+          "validfrom": "2022-01-01",
+          "validto": "9999-12-31",
+          "salestax": "19.00",
+          "unitprice": "5"
+        }
+      ]
+    }
+  }
+}

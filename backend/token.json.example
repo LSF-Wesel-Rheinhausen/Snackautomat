@@ -1,0 +1,21 @@
+[
+    {
+        "uid": "12345",
+        "title": "",
+        "firstname": "forename",
+        "lastname": "lastname",
+        "memberid": "1234",
+        "keymanagement": [
+            {
+                "title": "RFID-Transponder",
+                "keyname": "1234",
+                "rfidkey": "1"
+            },
+            {
+                "title": "1_Schliessanlage",
+                "keyname": "1234",
+                "rfidkey": "0"
+            }
+        ]
+    }
+    ]
