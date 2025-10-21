@@ -25,15 +25,36 @@ log_level = os.getenv("WEBAPP_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
 
 
-def create_app() -> Flask:
+def create_app(config: dict | None = None) -> Flask:
+    """Create and configure the Flask application instance.
+
+    Parameters
+    ----------
+    config:
+        Optional dictionary that will be merged into the application
+        configuration. This is primarily intended for tests where a mocked
+        backend service should be injected.
+    """
+
     app = Flask(
         __name__,
         template_folder="templates",
         static_folder="static",
     )
-    app.config.setdefault("SECRET_KEY", os.getenv("FLASK_SECRET_KEY", "dev-secret"))
-    app.config.setdefault("PERMANENT_SESSION_LIFETIME", timedelta(hours=12))
-    app.config.setdefault("BACKEND_API", BackendAPI())
+
+    secret_key = os.getenv("FLASK_SECRET_KEY") or app.config.get("SECRET_KEY") or "dev-secret"
+
+    app.config.from_mapping(
+        SECRET_KEY=secret_key,
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
+        BACKEND_API=BackendAPI(),
+    )
+
+    if config:
+        app.config.update(config)
+
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError("Flask SECRET_KEY must not be empty")
 
     app.register_blueprint(drinks_bp)
     app.register_blueprint(snacks_bp)

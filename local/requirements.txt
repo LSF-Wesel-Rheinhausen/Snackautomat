@@ -1,4 +1,6 @@
 flask
 pyserial
 python-dotenv
+pytest
+PyJWT
 tk
