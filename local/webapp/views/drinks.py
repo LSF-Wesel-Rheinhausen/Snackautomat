@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, render_template
 
-from ..services.backend_api import BackendAPI, BackendAPIError
+from local.webapp.services.backend_api import BackendAPI, BackendAPIError
 
 
 drinks_bp = Blueprint("drinks", __name__)

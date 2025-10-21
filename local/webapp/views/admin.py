@@ -16,7 +16,7 @@ from flask import (
     url_for,
 )
 
-from ..services.backend_api import BackendAPI, BackendAPIError
+from local.webapp.services.backend_api import BackendAPI, BackendAPIError
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")

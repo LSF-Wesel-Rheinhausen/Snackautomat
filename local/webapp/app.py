@@ -3,14 +3,22 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from flask import Flask, redirect, url_for
 
-from .services.backend_api import BackendAPI
-from .views.admin import admin_bp
-from .views.drinks import drinks_bp
-from .views.snacks import snacks_bp
+if __package__ in {None, ""}:  # pragma: no cover - defensive path setup for script execution
+    project_root = Path(__file__).resolve().parents[2]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    __package__ = "local.webapp"
+
+from local.webapp.services.backend_api import BackendAPI
+from local.webapp.views.admin import admin_bp
+from local.webapp.views.drinks import drinks_bp
+from local.webapp.views.snacks import snacks_bp
 
 
 log_level = os.getenv("WEBAPP_LOG_LEVEL", "INFO").upper()
