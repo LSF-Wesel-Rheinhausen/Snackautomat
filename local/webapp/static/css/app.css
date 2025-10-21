@@ -1,0 +1,290 @@
+:root {
+    --bg-color: #111827;
+    --card-bg: #1f2937;
+    --accent: #f59e0b;
+    --accent-contrast: #111827;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --danger: #f87171;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --info: #60a5fa;
+    font-size: 16px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #1f2937 0%, #0b1120 60%, #030712 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: rgba(3, 7, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.app-header__brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.app-header__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.app-header__subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.app-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.app-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.app-nav a.active,
+.app-nav a:hover {
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+
+.app-main {
+    flex: 1;
+    padding: 2rem;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero p {
+    color: var(--text-secondary);
+}
+
+.product-category {
+    margin-bottom: 2.5rem;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-card {
+    background: rgba(31, 41, 55, 0.9);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.product-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.product-card__price {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 1.25rem;
+}
+
+.product-card__unit {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.product-card__button {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--accent);
+    border: 1px dashed rgba(245, 158, 11, 0.4);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    cursor: not-allowed;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 2rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert--error {
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: var(--danger);
+}
+
+.flash-container {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.flash-message {
+    padding: 0.9rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.flash-message--success {
+    border-color: rgba(52, 211, 153, 0.4);
+    color: var(--success);
+}
+
+.flash-message--danger {
+    border-color: rgba(248, 113, 113, 0.4);
+    color: var(--danger);
+}
+
+.flash-message--warning {
+    border-color: rgba(251, 191, 36, 0.4);
+    color: var(--warning);
+}
+
+.flash-message--info {
+    border-color: rgba(96, 165, 250, 0.4);
+    color: var(--info);
+}
+
+.app-footer {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    background: rgba(3, 7, 18, 0.8);
+}
+
+.auth-card,
+.admin-card {
+    background: rgba(17, 24, 39, 0.85);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+}
+
+.auth-card {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.form {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.form label {
+    font-weight: 600;
+}
+
+.form input,
+.form button,
+.product-card__button {
+    font: inherit;
+}
+
+.form input {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(15, 23, 42, 0.9);
+    color: var(--text-primary);
+}
+
+.form button,
+.admin-card button {
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #0b1120;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.form button:hover,
+.admin-card button:hover {
+    transform: translateY(-1px);
+}
+
+.admin-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.admin-result {
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    overflow: auto;
+    max-height: 300px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+@media (min-width: 960px) {
+    .admin-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-grid > .admin-card:last-child {
+        grid-column: span 2;
+    }
+}

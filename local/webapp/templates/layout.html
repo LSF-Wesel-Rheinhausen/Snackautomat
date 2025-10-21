@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Snackautomat{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body>
+<header class="app-header">
+    <div class="app-header__brand">
+        <span class="app-header__title">Snackautomat</span>
+        <span class="app-header__subtitle">LSF Wesel-Rheinhausen</span>
+    </div>
+    <nav class="app-nav">
+        <ul>
+            {% for item in navigation %}
+            <li>
+                <a href="{{ url_for(item.endpoint) }}" class="{% if request.endpoint == item.endpoint %}active{% endif %}">{{ item.label }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </nav>
+</header>
+<main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-message--{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</main>
+<footer class="app-footer">
+    <p>&copy; {{ current_year | default(2025) }} Luftsportfreunde Wesel-Rheinhausen e.V.</p>
+</footer>
+</body>
+</html>

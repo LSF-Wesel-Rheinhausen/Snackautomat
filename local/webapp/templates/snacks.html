@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Snacks – Snackautomat{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Snacks</h1>
+    <p>Entdecke herzhafte und süße Snacks für zwischendurch.</p>
+</section>
+
+{% if error_message %}
+    <div class="alert alert--error">{{ error_message }}</div>
+{% endif %}
+
+{% if grouped_products %}
+    {% for category, items in grouped_products.items() %}
+        <section class="product-category">
+            <h2>{{ category }}</h2>
+            <div class="product-grid">
+                {% for product in items %}
+                    <article class="product-card">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-card__price">{{ product.price_label }}</p>
+                        {% if product.unit %}
+                            <p class="product-card__unit">Einheit: {{ product.unit }}</p>
+                        {% endif %}
+                        <button class="product-card__button" data-product-id="{{ product.product_id }}" disabled>
+                            Kaufen (RFID erforderlich)
+                        </button>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+{% else %}
+    <p class="empty-state">Keine Snacks gefunden. Bitte versuche es später erneut.</p>
+{% endif %}
+{% endblock %}
