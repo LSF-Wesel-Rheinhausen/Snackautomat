@@ -40,6 +40,28 @@ body {
 
 .app-header__brand {
     display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.app-header__logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(56, 189, 248, 0.25), rgba(2, 6, 23, 0));
+    display: grid;
+    place-items: center;
+    box-shadow: 0 12px 24px rgba(8, 47, 73, 0.35);
+}
+
+.app-header__logo svg {
+    display: block;
+    width: 62px;
+    height: 62px;
+}
+
+.app-header__text {
+    display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
@@ -52,6 +74,17 @@ body {
 .app-header__subtitle {
     font-size: 0.95rem;
     color: var(--text-secondary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
 }
 
 .app-nav ul {
