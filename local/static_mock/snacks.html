@@ -4,7 +4,180 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Snackautomat Mock – Snacks</title>
-    <link rel="stylesheet" href="css/mock.css" />
+    <style>
+@import url("../webapp/static/css/app.css");
+
+body {
+    background: #f0f4f8;
+}
+
+.mock-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+.mock-section {
+    margin-bottom: 2.5rem;
+}
+
+.mock-section h2 {
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+}
+
+.mock-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #0077ff, #00bcd4);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mock-button:active,
+.mock-button:focus {
+    outline: none;
+    transform: translateY(1px);
+}
+
+.mock-button:hover {
+    box-shadow: 0 12px 24px rgba(0, 123, 255, 0.25);
+}
+
+.mock-nav a.active {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.mock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.mock-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mock-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.mock-card__title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.mock-card__price {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #0284c7;
+}
+
+.mock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #0369a1;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.mock-chip--warning {
+    background: rgba(251, 191, 36, 0.18);
+    color: #b45309;
+}
+
+.mock-chip--success {
+    background: rgba(34, 197, 94, 0.18);
+    color: #047857;
+}
+
+.mock-card__actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.mock-card__actions button {
+    flex: 1;
+}
+
+.mock-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.mock-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.1);
+}
+
+.mock-table thead {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    color: #fff;
+}
+
+.mock-table th,
+.mock-table td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+}
+
+
+.mock-table tbody tr:nth-child(odd) {
+    background: rgba(148, 163, 184, 0.12);
+}
+
+.mock-table tbody tr:nth-child(even) {
+    background: rgba(226, 232, 240, 0.4);
+}
+
+.mock-card__meta {
+    font-size: 0.95rem;
+    color: #475569;
+}
+
+.mock-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    min-width: 240px;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(14, 165, 233, 0.95);
+    color: #fff;
+    box-shadow: 0 20px 36px rgba(2, 132, 199, 0.35);
+    display: none;
+    z-index: 999;
+}
+
+.mock-toast.show {
+    display: block;
+}
+
+</style>
 </head>
 <body>
 <header class="app-header">
@@ -34,8 +207,250 @@
     <p>&copy; 2025 Luftsportfreunde Wesel-Rheinhausen e.V.</p>
 </footer>
 <div class="mock-toast" role="status" aria-live="polite"></div>
-<script src="js/mock-data.js"></script>
-<script src="js/app.js"></script>
-<script src="js/snacks.js"></script>
+<script>
+const MOCK_PRODUCTS = {
+    drinks: [
+        {
+            id: "D-001",
+            name: "Isotonisches Sportgetränk",
+            price: 2.80,
+            volume: "500 ml",
+            tags: ["gekühlt", "ohne Zucker"],
+            stock: 14,
+            highlight: "Beliebt"
+        },
+        {
+            id: "D-002",
+            name: "Apfelschorle",
+            price: 2.20,
+            volume: "330 ml",
+            tags: ["regional", "fruchtig"],
+            stock: 8,
+            highlight: "Neu"
+        },
+        {
+            id: "D-003",
+            name: "Koffeinfreier Kaffee",
+            price: 1.70,
+            volume: "250 ml",
+            tags: ["heiß", "aromatisch"],
+            stock: 6,
+            highlight: "Saison"
+        }
+    ],
+    snacks: [
+        {
+            id: "S-101",
+            name: "Nuss-Mix Deluxe",
+            price: 3.40,
+            weight: "120 g",
+            tags: ["proteinreich", "glutenfrei"],
+            stock: 12,
+            highlight: "Energie"
+        },
+        {
+            id: "S-102",
+            name: "Schoko-Riegel Classic",
+            price: 1.90,
+            weight: "65 g",
+            tags: ["mit Nüssen"],
+            stock: 22,
+            highlight: "Klassiker"
+        },
+        {
+            id: "S-103",
+            name: "Vegane Hafer-Cookies",
+            price: 2.60,
+            weight: "80 g",
+            tags: ["vegan", "hafer"],
+            stock: 5,
+            highlight: "Limited"
+        }
+    ]
+};
+
+const MOCK_STATUS = {
+    machine: {
+        temperature: "6°C",
+        door: "geschlossen",
+        network: "stabil",
+        lastSync: "21.10.2025 17:45"
+    },
+    maintenance: [
+        {
+            id: "M-5501",
+            action: "Slot-Test 4B",
+            status: "erfolgreich",
+            performedAt: "21.10.2025 15:03"
+        },
+        {
+            id: "M-5502",
+            action: "Preisanpassung Snacks",
+            status: "ausstehend",
+            performedAt: "21.10.2025 11:22"
+        }
+    ]
+};
+
+const MOCK_USERS = [
+    { rfid: "041A82BC", name: "Jan S.", role: "Admin" },
+    { rfid: "07FF23D1", name: "Lena K.", role: "Pilot" },
+    { rfid: "03CD982A", name: "Chris B.", role: "Technik" }
+];
+
+</script>
+<script>
+function setActiveNav() {
+    const currentPage = window.location.pathname.split("/").pop() || "index.html";
+    document.querySelectorAll(".mock-nav a").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href) {
+            return;
+        }
+        const normalizedHref = href === "#" ? "index.html" : href;
+        if (normalizedHref === currentPage) {
+            link.classList.add("active");
+        }
+    });
+}
+
+function formatPrice(value) {
+    return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR",
+    }).format(value);
+}
+
+function showToast(message) {
+    const toast = document.querySelector(".mock-toast");
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function renderProductGrid(elementId, products) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    container.innerHTML = "";
+    products.forEach((product) => {
+        const card = document.createElement("article");
+        card.className = "mock-card";
+
+        card.innerHTML = `
+            <header class="mock-card__header">
+                <h3 class="mock-card__title">${product.name}</h3>
+                <span class="mock-card__price">${formatPrice(product.price)}</span>
+            </header>
+            <div class="mock-card__meta">
+                <span class="mock-chip">${product.highlight}</span>
+                <span class="mock-chip mock-chip--success">${product.stock}x verfügbar</span>
+            </div>
+            <div class="mock-card__meta">
+                <span>${product.volume || product.weight}</span>
+                <span>Artikel-Nr.: ${product.id}</span>
+            </div>
+            <p class="mock-card__meta">${product.tags.join(" · ")}</p>
+            <div class="mock-card__actions">
+                <button class="mock-button" data-product="${product.id}">Jetzt kaufen</button>
+                <button class="mock-button" data-product="${product.id}" data-action="details">Details</button>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+
+    container.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const productId = button.dataset.product;
+            if (button.dataset.action === "details") {
+                showToast(`Details für ${productId} öffnen (Mock)`);
+            } else {
+                showToast(`Kaufabsicht für ${productId} gestartet (Mock)`);
+            }
+        });
+    });
+}
+
+function renderMaintenanceTable(elementId, items) {
+    const tableBody = document.querySelector(`#${elementId} tbody`);
+    if (!tableBody) return;
+
+    tableBody.innerHTML = items
+        .map(
+            (item) => `
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.action}</td>
+                <td>
+                    <span class="mock-chip ${item.status === "erfolgreich" ? "mock-chip--success" : "mock-chip--warning"}">
+                        ${item.status}
+                    </span>
+                </td>
+                <td>${item.performedAt}</td>
+            </tr>
+        `
+        )
+        .join("");
+}
+
+function populateUserList(elementId, users) {
+    const list = document.getElementById(elementId);
+    if (!list) return;
+
+    list.innerHTML = "";
+    users.forEach((user) => {
+        const listItem = document.createElement("li");
+        listItem.className = "mock-card__meta";
+        listItem.innerHTML = `<strong>${user.name}</strong> (${user.role}) – RFID ${user.rfid}`;
+        list.appendChild(listItem);
+    });
+}
+
+function setupAdminActions() {
+    const loginForm = document.getElementById("mock-admin-login");
+    const commandButtons = document.querySelectorAll("[data-admin-action]");
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const pin = loginForm.querySelector("input[type='password']").value;
+            if (pin.trim()) {
+                showToast("Admin-Mock-Login erfolgreich");
+            } else {
+                showToast("Bitte PIN eingeben");
+            }
+        });
+    }
+
+    commandButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const action = button.dataset.adminAction;
+            showToast(`Mock-Aktion \"${action}\" ausgelöst`);
+        });
+    });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    setActiveNav();
+});
+
+window.MockHelpers = {
+    renderProductGrid,
+    renderMaintenanceTable,
+    populateUserList,
+    setupAdminActions,
+    showToast,
+};
+
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (!window.MockHelpers) return;
+    window.MockHelpers.renderProductGrid("mock-product-grid", MOCK_PRODUCTS.snacks);
+});
+
+</script>
 </body>
 </html>
