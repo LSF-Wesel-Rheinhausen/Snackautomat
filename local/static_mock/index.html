@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snackautomat Mock – Start</title>
+    <link rel="stylesheet" href="css/mock.css" />
+</head>
+<body>
+<header class="app-header">
+    <div class="app-header__brand">
+        <span class="app-header__title">Snackautomat</span>
+        <span class="app-header__subtitle">LSF Wesel-Rheinhausen</span>
+    </div>
+    <nav class="app-nav mock-nav">
+        <ul>
+            <li><a href="index.html">Start</a></li>
+            <li><a href="drinks.html">Getränke</a></li>
+            <li><a href="snacks.html">Snacks</a></li>
+            <li><a href="admin.html">Admin</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="app-main">
+    <section class="mock-container">
+        <div class="mock-section">
+            <h1>Interaktives Mockup</h1>
+            <p class="mock-card__meta">
+                Dieses Mockup zeigt das geplante Frontend des Snackautomaten, komplett klickbar und ohne Backend.
+                Nutzen Sie die Navigation oder die Call-to-Action-Buttons, um die einzelnen Bereiche zu erkunden.
+            </p>
+        </div>
+        <div class="mock-section">
+            <div class="mock-admin-grid">
+                <article class="mock-card">
+                    <header class="mock-card__header">
+                        <h2 class="mock-card__title">Getränke</h2>
+                        <span class="mock-chip">Sortiment</span>
+                    </header>
+                    <p class="mock-card__meta">Entdecken Sie gekühlte Getränke mit Touch-optimierten Karten.</p>
+                    <button class="mock-button" data-cta="drinks">Zu den Getränken</button>
+                </article>
+                <article class="mock-card">
+                    <header class="mock-card__header">
+                        <h2 class="mock-card__title">Snacks</h2>
+                        <span class="mock-chip">Auswahl</span>
+                    </header>
+                    <p class="mock-card__meta">Blättern Sie durch süße und herzhafte Artikel mit Mock-Kaufbuttons.</p>
+                    <button class="mock-button" data-cta="snacks">Zu den Snacks</button>
+                </article>
+                <article class="mock-card">
+                    <header class="mock-card__header">
+                        <h2 class="mock-card__title">Admin</h2>
+                        <span class="mock-chip">Technik</span>
+                    </header>
+                    <p class="mock-card__meta">Testen Sie PIN-Login, Wartungsaktionen und Statusanzeigen.</p>
+                    <button class="mock-button" data-cta="admin">Zum Adminbereich</button>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+<footer class="app-footer">
+    <p>&copy; 2025 Luftsportfreunde Wesel-Rheinhausen e.V.</p>
+</footer>
+<div class="mock-toast" role="status" aria-live="polite"></div>
+<script src="js/mock-data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>

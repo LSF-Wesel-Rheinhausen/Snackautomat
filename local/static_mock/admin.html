@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snackautomat Mock – Admin</title>
+    <link rel="stylesheet" href="css/mock.css" />
+</head>
+<body>
+<header class="app-header">
+    <div class="app-header__brand">
+        <span class="app-header__title">Snackautomat</span>
+        <span class="app-header__subtitle">LSF Wesel-Rheinhausen</span>
+    </div>
+    <nav class="app-nav mock-nav">
+        <ul>
+            <li><a href="index.html">Start</a></li>
+            <li><a href="drinks.html">Getränke</a></li>
+            <li><a href="snacks.html">Snacks</a></li>
+            <li><a href="admin.html">Admin</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="app-main">
+    <section class="mock-container">
+        <header class="mock-section">
+            <h1>Adminbereich</h1>
+            <p class="mock-card__meta">Testen Sie Login, Wartung und Benutzerverwaltung ohne Backend.</p>
+        </header>
+        <div class="mock-section mock-admin-grid">
+            <article class="mock-card">
+                <header class="mock-card__header">
+                    <h2 class="mock-card__title">Admin-Login</h2>
+                    <span class="mock-chip">PIN</span>
+                </header>
+                <form id="mock-admin-login" class="mock-section" autocomplete="off">
+                    <label class="mock-card__meta" for="mock-pin">4-stellige PIN</label>
+                    <input id="mock-pin" type="password" maxlength="4" inputmode="numeric" pattern="\\d{4}" required class="mock-button" style="background:#fff;color:#0f172a;" />
+                    <div class="mock-card__actions" style="margin-top:1rem;">
+                        <button type="submit" class="mock-button">Anmelden</button>
+                    </div>
+                </form>
+            </article>
+            <article class="mock-card">
+                <header class="mock-card__header">
+                    <h2 class="mock-card__title">Automatenstatus</h2>
+                    <span class="mock-chip">Live</span>
+                </header>
+                <p class="mock-card__meta">Temperatur</p>
+                <p class="mock-card__meta" data-status="temperature">–</p>
+                <p class="mock-card__meta">Türzustand</p>
+                <p class="mock-card__meta" data-status="door">–</p>
+                <p class="mock-card__meta">Netzwerk</p>
+                <p class="mock-card__meta" data-status="network">–</p>
+                <p class="mock-card__meta">Letzte Synchronisation</p>
+                <p class="mock-card__meta" data-last-sync>–</p>
+            </article>
+            <article class="mock-card">
+                <header class="mock-card__header">
+                    <h2 class="mock-card__title">Schnellaktionen</h2>
+                    <span class="mock-chip">Service</span>
+                </header>
+                <div class="mock-card__actions">
+                    <button class="mock-button" data-admin-action="slot-test">Slot-Test</button>
+                    <button class="mock-button" data-admin-action="sync">Sync</button>
+                </div>
+                <div class="mock-card__actions">
+                    <button class="mock-button" data-admin-action="ota-update">OTA-Update</button>
+                    <button class="mock-button" data-admin-action="rollback">Rollback</button>
+                </div>
+            </article>
+        </div>
+        <div class="mock-section">
+            <h2>Letzte Wartungsaktionen</h2>
+            <table class="mock-table" id="mock-maintenance-table">
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Aktion</th>
+                        <th>Status</th>
+                        <th>Zeitpunkt</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="mock-section">
+            <h2>Bekannte RFID-Nutzer</h2>
+            <ul id="mock-user-list"></ul>
+        </div>
+    </section>
+</main>
+<footer class="app-footer">
+    <p>&copy; 2025 Luftsportfreunde Wesel-Rheinhausen e.V.</p>
+</footer>
+<div class="mock-toast" role="status" aria-live="polite"></div>
+<script src="js/mock-data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
