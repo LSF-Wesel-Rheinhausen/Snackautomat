@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block title %}Admin – Snackautomat{% endblock %}
+{% block content %}
+<section class="admin-grid">
+    <div class="admin-card">
+        <h2>RFID-Suche</h2>
+        <form method="post" class="form">
+            <input type="hidden" name="action" value="lookup_rfid" />
+            <label for="rfid">RFID-Code</label>
+            <input type="text" id="rfid" name="rfid" placeholder="RFID eingeben" required />
+            <button type="submit">Suchen</button>
+        </form>
+        {% if rfid_lookup %}
+            <pre class="admin-result">{{ rfid_lookup | tojson(indent=2) }}</pre>
+        {% endif %}
+    </div>
+
+    <div class="admin-card">
+        <h2>Testverkauf</h2>
+        <form method="post" class="form">
+            <input type="hidden" name="action" value="create_sale" />
+            <label for="member_id">Mitglieds-ID</label>
+            <input type="text" id="member_id" name="member_id" required />
+            <label for="item_id">Artikel-ID</label>
+            <input type="text" id="item_id" name="item_id" required />
+            <label for="amount">Menge</label>
+            <input type="number" id="amount" name="amount" min="1" value="1" />
+            <button type="submit">Verkauf auslösen</button>
+        </form>
+        {% if sale_result %}
+            <pre class="admin-result">{{ sale_result | tojson(indent=2) }}</pre>
+        {% endif %}
+    </div>
+
+    <div class="admin-card">
+        <h2>Produkte</h2>
+        <form method="post" class="form form--inline">
+            <input type="hidden" name="action" value="refresh_products" />
+            <button type="submit">Aktualisieren</button>
+        </form>
+        {% if products %}
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Preis</th>
+                        <th>Kategorie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.price_label }}</td>
+                            <td>{{ product.display_category }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-state">Keine Produkte verfügbar.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block title %}Admin Login – Snackautomat{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h1>Admin-Anmeldung</h1>
+    <form method="post" class="form">
+        <label for="pin">Admin-PIN</label>
+        <input type="password" id="pin" name="pin" required autofocus />
+        <button type="submit">Anmelden</button>
+    </form>
+</section>
+{% endblock %}
