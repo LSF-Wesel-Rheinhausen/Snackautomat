@@ -1,6 +1,6 @@
 import datetime
 import os
-import jwt
+import jwt as pyjwt
 import requests
 import logging
 from dotenv import load_dotenv
@@ -13,10 +13,11 @@ ignore_self_signed_cert = os.getenv('IGNORE_SELF_SIGNED_CERT', 'false').lower() 
 
 def get_jwt_token(payload) -> str:
     key = os.environ.get('JWT_SECRET_KEY')
-    if not isinstance(key, str):
-        raise TypeError("JWT_SECRET_KEY environment variable must be a string")
-    key = str(key)  # Ensure the key is a string
-    token = jwt.encode(payload, key, algorithm="HS256")
+    if not key:
+        raise EnvironmentError("JWT_SECRET_KEY environment variable must be set")
+    token = pyjwt.encode(payload, key, algorithm="HS256")
+    if isinstance(token, bytes):
+        token = token.decode("utf-8")
     return token
 
 def get_user_by_rfid(rfid: str) -> dict:

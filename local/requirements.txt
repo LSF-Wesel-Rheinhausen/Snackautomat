@@ -2,3 +2,5 @@ flask
 pyserial
 python-dotenv
 tk
+requests
+serial

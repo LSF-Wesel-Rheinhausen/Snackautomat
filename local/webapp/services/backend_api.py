@@ -1,9 +1,9 @@
-"""Helper classes to interact with the Snackautomat backend API for the web frontend.
+"""Helper classes to interact with the local Snackautomat frontend API for the web frontend.
 
-The module exposes :class:`BackendAPI` which acts as a thin wrapper around the
-functions already provided in :mod:`local.api_caller`.  The wrapper normalises
-responses so that the Flask views can operate on a predictable data structure
-while still reusing the proven request logic from the legacy Tkinter frontend.
+The module exposes :class:`BackendAPI` which talks to the lightweight Flask API
+provided by :mod:`local.frontend_api`.  Responses are normalised so that the
+Flask views can operate on a predictable data structure while still reusing the
+same categorisation logic as the Tkinter frontend.
 """
 from __future__ import annotations
 
@@ -12,9 +12,10 @@ import os
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Sequence
+from urllib.parse import urljoin
 
-from local import api_caller
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -79,15 +80,25 @@ class BackendAPIError(RuntimeError):
 
 
 class BackendAPI:
-    """High level access to the backend endpoints used by the Flask frontend."""
+    """High level access to the local frontend API used by the Flask frontend."""
 
-    def __init__(self, *, cache_ttl: int = 30) -> None:
+    def __init__(
+        self,
+        *,
+        cache_ttl: int = 30,
+        base_url: Optional[str] = None,
+        timeout: Optional[float] = None,
+        session: Optional[requests.Session] = None,
+    ) -> None:
         self._cache_ttl = cache_ttl
         self._products_cache: Optional[Dict[str, object]] = None
         self._drink_categories = set(_parse_csv_env("WEBAPP_DRINK_CATEGORIES", DEFAULT_DRINK_CATEGORIES))
         self._snack_categories = set(_parse_csv_env("WEBAPP_SNACK_CATEGORIES", DEFAULT_SNACK_CATEGORIES))
         self._drink_keywords = set(_parse_csv_env("WEBAPP_DRINK_KEYWORDS", DEFAULT_DRINK_KEYWORDS))
         self._snack_keywords = set(_parse_csv_env("WEBAPP_SNACK_KEYWORDS", DEFAULT_SNACK_KEYWORDS))
+        self._base_url = (base_url or os.getenv("FRONTEND_API_URL", "http://127.0.0.1:5001")).rstrip("/") + "/"
+        self._timeout = timeout if timeout is not None else float(os.getenv("WEBAPP_API_TIMEOUT", "5"))
+        self._session = session or requests.Session()
 
     # ------------------------------------------------------------------
     # Public API
@@ -100,9 +111,12 @@ class BackendAPI:
             return cached["products"]  # type: ignore[return-value]
 
         try:
-            raw_products = api_caller.get_valid_products()
+            params = {"refresh": "1"} if force_refresh else None
+            raw_products = self._request_json("GET", "products", params=params)
+        except BackendAPIError:
+            raise
         except Exception as exc:  # pragma: no cover - network error handling
-            logger.exception("Unable to fetch products from backend")
+            logger.exception("Unable to fetch products from frontend API")
             raise BackendAPIError("Fehler beim Abrufen der Produktliste") from exc
 
         products = self._normalise_products(raw_products)
@@ -138,7 +152,7 @@ class BackendAPI:
         """Return backend information for the given RFID code."""
 
         try:
-            return api_caller.get_user_by_rfid(rfid)
+            return self._request_json("POST", "login", json={"rfid": rfid})
         except Exception as exc:  # pragma: no cover - network error handling
             logger.exception("RFID lookup failed")
             raise BackendAPIError("RFID konnte nicht nachgeschlagen werden") from exc
@@ -147,7 +161,12 @@ class BackendAPI:
         """Trigger a new sale via the backend."""
 
         try:
-            return api_caller.set_new_sale(member_id, item_id, amount)
+            return self._request_json(
+                "POST",
+                "sales",
+                json={"memberid": member_id, "itemid": item_id, "amount": amount},
+                expected_status=(200, 201),
+            )
         except Exception as exc:  # pragma: no cover - network error handling
             logger.exception("Unable to create sale")
             raise BackendAPIError("Verkauf konnte nicht erstellt werden") from exc
@@ -258,3 +277,35 @@ class BackendAPI:
         if any(keyword in name for keyword in keywords):
             return True
         return False
+
+    # ------------------------------------------------------------------
+    # HTTP helpers
+    # ------------------------------------------------------------------
+    def _build_url(self, path: str) -> str:
+        return urljoin(self._base_url, path)
+
+    def _request_json(
+        self,
+        method: str,
+        path: str,
+        *,
+        expected_status: Sequence[int] = (200,),
+        **kwargs,
+    ):
+        url = self._build_url(path)
+        try:
+            response = self._session.request(method, url, timeout=self._timeout, **kwargs)
+        except requests.RequestException as exc:
+            raise BackendAPIError("Lokale Frontend-API nicht erreichbar") from exc
+
+        if response.status_code not in expected_status:
+            try:
+                detail = response.json()
+            except ValueError:
+                detail = response.text.strip()
+            raise BackendAPIError(f"Frontend-API Fehler ({response.status_code}): {detail}")
+
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise BackendAPIError("Ungueltige JSON-Antwort von der Frontend-API") from exc
