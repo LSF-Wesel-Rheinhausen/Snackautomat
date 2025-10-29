@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Snackautomat Mock – Getränke</title>
+    <style>
+/* Base styles mirrored from local/webapp/static/css/app.css */
+:root {
+    --bg-color: #020617;
+    --surface-color: #0b1220;
+    --card-bg: #111c2f;
+    --accent: #38bdf8;
+    --accent-contrast: #031424;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5f5;
+    --text-muted: #94a3b8;
+    --danger: #f87171;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --info: #60a5fa;
+    font-size: 16px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at 20% 0%, #1e293b 0%, #0f172a 55%, #020617 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: rgba(2, 12, 25, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.app-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.app-header__logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(56, 189, 248, 0.25), rgba(2, 6, 23, 0));
+    display: grid;
+    place-items: center;
+    box-shadow: 0 12px 24px rgba(8, 47, 73, 0.35);
+}
+
+.app-header__logo svg {
+    display: block;
+    width: 62px;
+    height: 62px;
+}
+
+.app-header__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.app-header__title {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.app-header__subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.app-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.app-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.app-nav a.active,
+.app-nav a:hover {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: var(--text-primary);
+}
+
+.app-main {
+    flex: 1;
+    padding: 2rem;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero p {
+    color: var(--text-secondary);
+}
+
+.product-category {
+    margin-bottom: 2.5rem;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(7, 11, 25, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.product-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.product-card__price {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 1.25rem;
+}
+
+.product-card__unit {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.product-card__button {
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--accent-contrast);
+    border: 1px dashed rgba(56, 189, 248, 0.5);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    cursor: not-allowed;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.product-card__button:focus {
+    outline: 2px solid rgba(56, 189, 248, 0.6);
+    outline-offset: 2px;
+}
+
+.product-card__button:hover {
+    background: rgba(56, 189, 248, 0.24);
+    border-color: rgba(56, 189, 248, 0.65);
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 2rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert--error {
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: var(--danger);
+}
+
+.flash-container {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.flash-message {
+    padding: 0.9rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(6, 16, 31, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.flash-message--success {
+    border-color: rgba(52, 211, 153, 0.4);
+    color: var(--success);
+}
+
+.flash-message--danger {
+    border-color: rgba(248, 113, 113, 0.4);
+    color: var(--danger);
+}
+
+.flash-message--warning {
+    border-color: rgba(251, 191, 36, 0.4);
+    color: var(--warning);
+}
+
+.flash-message--info {
+    border-color: rgba(96, 165, 250, 0.4);
+    color: var(--info);
+}
+
+.app-footer {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    background: rgba(2, 12, 25, 0.85);
+}
+
+.auth-card,
+.admin-card {
+    background: rgba(10, 18, 34, 0.92);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 16px 32px rgba(7, 11, 25, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.auth-card {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.form {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.form label {
+    font-weight: 600;
+}
+
+.form input,
+.form button,
+.product-card__button {
+    font: inherit;
+}
+
+.form input {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(6, 16, 31, 0.9);
+    color: var(--text-primary);
+}
+
+.form button,
+.admin-card button {
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: none;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: var(--accent-contrast);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    box-shadow: 0 10px 20px rgba(8, 47, 73, 0.4);
+}
+
+.form button:hover,
+.admin-card button:hover {
+    transform: translateY(-1px);
+}
+
+.admin-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.admin-result {
+    background: rgba(6, 16, 31, 0.9);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    overflow: auto;
+    max-height: 300px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+@media (min-width: 960px) {
+    .admin-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-grid > .admin-card:last-child {
+        grid-column: span 2;
+    }
+}
+
+/* Mock preview helpers (keep in sync with templates) */
+.mock-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+.mock-section {
+    margin-bottom: 2.5rem;
+}
+
+.mock-section h1,
+.mock-section h2 {
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    color: var(--text-primary);
+}
+
+.mock-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 40px rgba(7, 11, 25, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mock-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.mock-card__title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.mock-card__price {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.mock-card__meta {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.mock-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.16);
+    color: var(--accent-contrast);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.mock-chip--warning {
+    background: rgba(251, 191, 36, 0.22);
+    color: #92400e;
+}
+
+.mock-chip--success {
+    background: rgba(52, 211, 153, 0.22);
+    color: #065f46;
+}
+
+.mock-card__actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.mock-card__actions button {
+    flex: 1;
+}
+
+.product-card__button[data-mock-action] {
+    cursor: pointer;
+}
+
+.product-card__button[data-mock-action]:hover {
+    transform: translateY(-1px);
+}
+
+.mock-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.85rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: var(--accent-contrast);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 12px 24px rgba(8, 47, 73, 0.45);
+}
+
+.mock-button:focus {
+    outline: 2px solid rgba(56, 189, 248, 0.6);
+    outline-offset: 2px;
+}
+
+.mock-button:active {
+    transform: translateY(1px);
+}
+
+.mock-button:hover {
+    box-shadow: 0 16px 32px rgba(8, 47, 73, 0.5);
+}
+
+.mock-nav a.active {
+    background: rgba(56, 189, 248, 0.3);
+    border-color: rgba(56, 189, 248, 0.6);
+    color: var(--text-primary);
+}
+
+.mock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+
+.mock-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.mock-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 18px 32px rgba(7, 11, 25, 0.3);
+    background: rgba(6, 16, 31, 0.85);
+}
+
+.mock-table thead {
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: var(--accent-contrast);
+}
+
+.mock-table th,
+.mock-table td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+}
+
+.mock-table tbody tr:nth-child(odd) {
+    background: rgba(8, 18, 36, 0.9);
+}
+
+.mock-table tbody tr:nth-child(even) {
+    background: rgba(8, 18, 36, 0.75);
+}
+
+.mock-toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    min-width: 240px;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(56, 189, 248, 0.95);
+    color: var(--accent-contrast);
+    box-shadow: 0 20px 36px rgba(8, 47, 73, 0.45);
+    display: none;
+    z-index: 999;
+}
+
+.mock-toast.show {
+    display: block;
+}
+
+#mock-user-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+#mock-user-list p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+</style>
+</head>
+<body>
+<header class="app-header">
+    <div class="app-header__brand" aria-label="Snackautomat der Luftsportfreunde Wesel-Rheinhausen e.V.">
+        <div class="app-header__logo" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" focusable="false" role="presentation">
+                <defs>
+                    <linearGradient id="mock-logo-blue" x1="12" x2="108" y1="26" y2="94" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#1e88e5" />
+                        <stop offset="1" stop-color="#38bdf8" />
+                    </linearGradient>
+                </defs>
+                <circle cx="60" cy="60" r="54" fill="none" stroke="url(#mock-logo-blue)" stroke-width="6" stroke-linecap="round" />
+                <path d="M95 24c-6.4 10.9-15.6 21.5-27.9 29.1-8.4 5.2-20.7 9.2-33 9.9l-16.8.9" fill="none" stroke="#1e88e5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20 64l37-6.8c9.2-1.7 19.4-4.8 27.6-9.4l10.2-5.7c1.7-.9 1.4-2.6-.5-2.9l-11.4-1.7c-5.3-.8-10.6-.3-15.7 1.5L27 54" fill="#d9e3f8" />
+                <path d="M20 64l37-6.8c9.2-1.7 19.4-4.8 27.6-9.4l10.2-5.7c1.7-.9 1.4-2.6-.5-2.9l-11.4-1.7c-5.3-.8-10.6-.3-15.7 1.5L27 54" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" />
+                <path d="M61.2 46.6l6.4-7.8" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
+                <path d="M34 55.5l-6.2-6.4" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </div>
+        <div class="app-header__text">
+            <span class="app-header__title">Snackautomat</span>
+            <span class="app-header__subtitle">LSF Wesel-Rheinhausen</span>
+        </div>
+    </div>
+    <nav class="app-nav mock-nav">
+        <ul>
+            <li><a href="index.html">Start</a></li>
+            <li><a href="drinks.html">Getränke</a></li>
+            <li><a href="snacks.html">Snacks</a></li>
+            <li><a href="admin.html">Admin</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="app-main">
+    <section class="hero">
+        <h1>Getränke</h1>
+        <p>Wähle dein Lieblingsgetränk aus unserem aktuellen Sortiment.</p>
+    </section>
+    <div id="mock-product-root"></div>
+</main>
+<footer class="app-footer">
+    <p>&copy; 2025 Luftsportfreunde Wesel-Rheinhausen e.V.</p>
+</footer>
+<div class="mock-toast" role="status" aria-live="polite"></div>
+<script>
+const MOCK_PRODUCTS = {
+    drinks: [
+        {
+            id: "D-001",
+            name: "Isotonisches Sportgetränk",
+            price: 2.8,
+            unit: "500 ml Flasche",
+            tags: ["gekühlt", "ohne Zucker"],
+            stock: 14,
+            highlight: "Beliebt",
+            category: "Sport & Regeneration"
+        },
+        {
+            id: "D-002",
+            name: "Apfelschorle",
+            price: 2.2,
+            unit: "330 ml Flasche",
+            tags: ["regional", "fruchtig"],
+            stock: 8,
+            highlight: "Neu",
+            category: "Fruchtig & Regional"
+        },
+        {
+            id: "D-003",
+            name: "Koffeinfreier Kaffee",
+            price: 1.7,
+            unit: "250 ml Becher",
+            tags: ["heiß", "aromatisch"],
+            stock: 6,
+            highlight: "Saison",
+            category: "Heißgetränke"
+        }
+    ],
+    snacks: [
+        {
+            id: "S-101",
+            name: "Nuss-Mix Deluxe",
+            price: 3.4,
+            unit: "120 g Packung",
+            tags: ["proteinreich", "glutenfrei"],
+            stock: 12,
+            highlight: "Energie",
+            category: "Nüsse & Energie"
+        },
+        {
+            id: "S-102",
+            name: "Schoko-Riegel Classic",
+            price: 1.9,
+            unit: "65 g Riegel",
+            tags: ["mit Nüssen"],
+            stock: 22,
+            highlight: "Klassiker",
+            category: "Süßes & Klassiker"
+        },
+        {
+            id: "S-103",
+            name: "Vegane Hafer-Cookies",
+            price: 2.6,
+            unit: "80 g Packung",
+            tags: ["vegan", "hafer"],
+            stock: 5,
+            highlight: "Limited",
+            category: "Vegan & Spezial"
+        }
+    ]
+};
+
+const MOCK_STATUS = {
+    machine: {
+        temperature: "6°C",
+        door: "geschlossen",
+        network: "stabil",
+        lastSync: "21.10.2025 17:45"
+    },
+    maintenance: [
+        {
+            id: "M-5501",
+            action: "Slot-Test 4B",
+            status: "erfolgreich",
+            performedAt: "21.10.2025 15:03"
+        },
+        {
+            id: "M-5502",
+            action: "Preisanpassung Snacks",
+            status: "ausstehend",
+            performedAt: "21.10.2025 11:22"
+        }
+    ]
+};
+
+const MOCK_USERS = [
+    { rfid: "041A82BC", name: "Jan S.", role: "Admin" },
+    { rfid: "07FF23D1", name: "Lena K.", role: "Pilot" },
+    { rfid: "03CD982A", name: "Chris B.", role: "Technik" }
+];
+
+function setActiveNav() {
+    const currentPage = window.location.pathname.split("/").pop() || "index.html";
+    document.querySelectorAll(".mock-nav a").forEach((link) => {
+        const href = link.getAttribute("href");
+        if (!href) {
+            return;
+        }
+        const normalizedHref = href === "#" ? "index.html" : href;
+        if (normalizedHref === currentPage) {
+            link.classList.add("active");
+        }
+    });
+}
+
+function formatPrice(value) {
+    return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR",
+    }).format(value);
+}
+
+function showToast(message) {
+    const toast = document.querySelector(".mock-toast");
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function groupByCategory(products, fallback = "Sortiment") {
+    return products.reduce((accumulator, product) => {
+        const key = product.category || fallback;
+        if (!accumulator[key]) {
+            accumulator[key] = [];
+        }
+        accumulator[key].push(product);
+        return accumulator;
+    }, {});
+}
+
+function renderProductGrid(rootId, products, options = {}) {
+    const container = document.getElementById(rootId);
+    if (!container) return;
+
+    const grouped = options.groupByCategory
+        ? groupByCategory(products, options.fallbackCategory)
+        : { [options.singleCategoryLabel || "Sortiment"]: products };
+
+    container.innerHTML = "";
+
+    Object.entries(grouped).forEach(([categoryName, items]) => {
+        const section = document.createElement("section");
+        section.className = "product-category";
+
+        const heading = document.createElement("h2");
+        heading.textContent = categoryName;
+        section.appendChild(heading);
+
+        const grid = document.createElement("div");
+        grid.className = "product-grid";
+
+        items.forEach((product) => {
+            const card = document.createElement("article");
+            card.className = "product-card";
+
+            const title = document.createElement("h3");
+            title.textContent = product.name;
+            card.appendChild(title);
+
+            const price = document.createElement("p");
+            price.className = "product-card__price";
+            price.textContent = formatPrice(product.price);
+            card.appendChild(price);
+
+            if (product.unit) {
+                const unit = document.createElement("p");
+                unit.className = "product-card__unit";
+                unit.textContent = `Einheit: ${product.unit}`;
+                card.appendChild(unit);
+            }
+
+            if (product.tags && product.tags.length) {
+                const tags = document.createElement("p");
+                tags.className = "product-card__unit";
+                tags.textContent = product.tags.join(" · ");
+                card.appendChild(tags);
+            }
+
+            const button = document.createElement("button");
+            button.className = "product-card__button";
+            button.dataset.mockAction = "purchase";
+            button.dataset.product = product.id;
+            button.type = "button";
+            button.textContent = options.buttonLabel || "Kauf testen";
+            card.appendChild(button);
+
+            grid.appendChild(card);
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+    });
+
+    container.querySelectorAll(".product-card__button[data-mock-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const productId = button.dataset.product;
+            const prefix = options.toastPrefix || "Mock-Kauf";
+            showToast(`${prefix} für ${productId}`);
+        });
+    });
+}
+
+function renderMaintenanceTable(elementId, items) {
+    const tableBody = document.querySelector(`#${elementId} tbody`);
+    if (!tableBody) return;
+
+    tableBody.innerHTML = items
+        .map(
+            (item) => `
+            <tr>
+                <td>${item.id}</td>
+                <td>${item.action}</td>
+                <td>
+                    <span class="mock-chip ${item.status === "erfolgreich" ? "mock-chip--success" : "mock-chip--warning"}">
+                        ${item.status}
+                    </span>
+                </td>
+                <td>${item.performedAt}</td>
+            </tr>
+        `
+        )
+        .join("");
+}
+
+function populateUserList(elementId, users) {
+    const container = document.getElementById(elementId);
+    if (!container) return;
+
+    container.innerHTML = users
+        .map((user) => `<p><strong>${user.name}</strong> (${user.role}) – RFID ${user.rfid}</p>`)
+        .join("");
+}
+
+function setupAdminActions() {
+    const loginForm = document.getElementById("mock-admin-login");
+    const commandButtons = document.querySelectorAll("[data-admin-action]");
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const pinField = loginForm.querySelector("input[type='password']");
+            if (pinField && pinField.value.trim()) {
+                showToast("Admin-Mock-Login erfolgreich");
+            } else {
+                showToast("Bitte PIN eingeben");
+            }
+        });
+    }
+
+    commandButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const action = button.dataset.adminAction;
+            showToast(`Mock-Aktion "${action}" ausgelöst`);
+        });
+    });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    setActiveNav();
+});
+
+window.MockHelpers = {
+    renderProductGrid,
+    renderMaintenanceTable,
+    populateUserList,
+    setupAdminActions,
+    showToast,
+};
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    if (!window.MockHelpers) return;
+    window.MockHelpers.renderProductGrid("mock-product-root", MOCK_PRODUCTS.drinks, {
+        groupByCategory: true,
+        buttonLabel: "Kauf testen",
+        toastPrefix: "Mock-Kauf",
+    });
+});
+</script>
+</body>
+</html>

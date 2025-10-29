@@ -1,10 +1,12 @@
 :root {
-    --bg-color: #111827;
-    --card-bg: #1f2937;
-    --accent: #f59e0b;
-    --accent-contrast: #111827;
-    --text-primary: #f9fafb;
-    --text-secondary: #d1d5db;
+    --bg-color: #020617;
+    --surface-color: #0b1220;
+    --card-bg: #111c2f;
+    --accent: #38bdf8;
+    --accent-contrast: #031424;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5f5;
+    --text-muted: #94a3b8;
     --danger: #f87171;
     --success: #34d399;
     --warning: #fbbf24;
@@ -19,7 +21,7 @@
 body {
     margin: 0;
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, #1f2937 0%, #0b1120 60%, #030712 100%);
+    background: radial-gradient(circle at 20% 0%, #1e293b 0%, #0f172a 55%, #020617 100%);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
@@ -31,12 +33,34 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
-    background: rgba(3, 7, 18, 0.8);
+    background: rgba(2, 12, 25, 0.85);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .app-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.app-header__logo {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(56, 189, 248, 0.25), rgba(2, 6, 23, 0));
+    display: grid;
+    place-items: center;
+    box-shadow: 0 12px 24px rgba(8, 47, 73, 0.35);
+}
+
+.app-header__logo svg {
+    display: block;
+    width: 62px;
+    height: 62px;
+}
+
+.app-header__text {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
@@ -52,6 +76,17 @@ body {
     color: var(--text-secondary);
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
 .app-nav ul {
     display: flex;
     list-style: none;
@@ -63,15 +98,17 @@ body {
 .app-nav a {
     color: var(--text-secondary);
     text-decoration: none;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.1rem;
     border-radius: 999px;
-    transition: background 0.2s ease, color 0.2s ease;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .app-nav a.active,
 .app-nav a:hover {
-    background: var(--accent);
-    color: var(--accent-contrast);
+    background: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.45);
+    color: var(--text-primary);
 }
 
 .app-main {
@@ -104,10 +141,11 @@ body {
 }
 
 .product-card {
-    background: rgba(31, 41, 55, 0.9);
+    background: var(--card-bg);
     border-radius: 1rem;
     padding: 1.5rem;
-    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 20px 40px rgba(7, 11, 25, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.18);
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
@@ -131,13 +169,24 @@ body {
 }
 
 .product-card__button {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--accent);
-    border: 1px dashed rgba(245, 158, 11, 0.4);
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--accent-contrast);
+    border: 1px dashed rgba(56, 189, 248, 0.5);
     border-radius: 0.75rem;
     padding: 0.75rem;
     font-size: 1rem;
     cursor: not-allowed;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.product-card__button:focus {
+    outline: 2px solid rgba(56, 189, 248, 0.6);
+    outline-offset: 2px;
+}
+
+.product-card__button:hover {
+    background: rgba(56, 189, 248, 0.24);
+    border-color: rgba(56, 189, 248, 0.65);
 }
 
 .empty-state {
@@ -167,8 +216,8 @@ body {
 .flash-message {
     padding: 0.9rem 1rem;
     border-radius: 0.75rem;
-    background: rgba(30, 41, 59, 0.8);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(6, 16, 31, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .flash-message--success {
@@ -196,15 +245,16 @@ body {
     padding: 1rem;
     color: var(--text-secondary);
     font-size: 0.875rem;
-    background: rgba(3, 7, 18, 0.8);
+    background: rgba(2, 12, 25, 0.85);
 }
 
 .auth-card,
 .admin-card {
-    background: rgba(17, 24, 39, 0.85);
+    background: rgba(10, 18, 34, 0.92);
     border-radius: 1rem;
     padding: 1.5rem;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 16px 32px rgba(7, 11, 25, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .auth-card {
@@ -230,8 +280,8 @@ body {
 .form input {
     padding: 0.75rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(6, 16, 31, 0.9);
     color: var(--text-primary);
 }
 
@@ -240,11 +290,12 @@ body {
     padding: 0.75rem 1rem;
     border-radius: 0.75rem;
     border: none;
-    background: linear-gradient(135deg, #f59e0b, #f97316);
-    color: #0b1120;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: var(--accent-contrast);
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.15s ease;
+    box-shadow: 0 10px 20px rgba(8, 47, 73, 0.4);
 }
 
 .form button:hover,
@@ -258,12 +309,12 @@ body {
 }
 
 .admin-result {
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(6, 16, 31, 0.9);
     border-radius: 0.75rem;
     padding: 1rem;
     overflow: auto;
     max-height: 300px;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
 .admin-table {
