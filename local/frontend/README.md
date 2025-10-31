@@ -7,7 +7,7 @@ Repository: github.com/LSF-Wesel-Rheinhausen/Snackautomat
 
 Kurzbeschreibung
 -----------------
-Das Frontend stellt die Benutzeroberfläche für den vereinsinternen Snackautomaten bereit. Es läuft auf einem Raspberry Pi mit Touchdisplay und wird als statische Web‑App vom Python/Flask‑Backend (localhost) gehostet. Ziel ist ein robustes, wartbares, barrierefreies und sicheres UI, das Verkaufsvorgänge, Admin‑Funktionen und Integration mit Home Assistant unterstützt.
+Das Frontend stellt die Benutzeroberfläche für den vereinsinternen Snackautomaten bereit. Es läuft auf einem Raspberry Pi mit Touchdisplay und wird als statische Web‑App vom Python/Flask‑Backend (localhost) gehostet, welches über einen Broker die Verkäufe in Vereinsflieger bucht. Ziel ist ein robustes, wartbares, barrierefreies und sicheres UI, das Verkaufsvorgänge, Admin‑Funktionen und Integration mit Home Assistant unterstützt.
 
 Ziele
 -----
@@ -42,8 +42,8 @@ Datei‑/Komponentenstruktur (Empfehlung)
 Wichtige Anforderungen an das UI
 -------------------------------
 1. Nutzer‑Flows
-   - Snack‑Kauf: Startbildschirm → Produktauswahl → NFC‑Zahlung → Ausgabe → Bestätigung
-   - Admin‑Modus: PIN‑eingabe → Admin‑Dashboard (Slot‑Test, Preisänderungen, Sync, OTA, Sperren)
+   - Snack‑Kauf: Startbildschirm → NFC-Login → Produktauswahl → Ausgabe+Buchung → Bestätigung
+   - Admin‑Modus: PIN‑eingabe (nur verfügbar für Spezielle NutzerIDs) → Admin‑Dashboard (Slot‑Test, Sync, OTA, Sperren)
    - Home Assistant: Status, Temperatur, Türzustand, Sperrschalter (anzeigen/aktualisieren)
 
 2. Barrierefreiheit & UX
@@ -59,7 +59,6 @@ Wichtige Anforderungen an das UI
 4. Sicherheit
    - Content Security Policy (CSP) festlegen und einhalten
    - Keine sensiblen Daten in Code oder im lokalen Storage
-   - API‑Authentifizierung: statischer API‑Key — nur im Speicher halten, Request Header `X-API-KEY` verwenden
    - Keine direkte Hardwaresteuerung im Frontend — nur über Backend auf localhost
 
 API / Backend‑Contract (Kurzbeschreibung)
