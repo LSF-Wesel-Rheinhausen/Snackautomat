@@ -7,15 +7,13 @@ Repository: github.com/LSF-Wesel-Rheinhausen/Snackautomat
 
 Kurzbeschreibung
 -----------------
-Das Frontend stellt die Benutzeroberfläche für den vereinsinternen Snackautomaten bereit. Es läuft auf einem Raspberry Pi mit Touchdisplay und wird als statische Web‑App vom Python/Flask‑Backend (localhost) gehostet, welches über einen Broker die Verkäufe in Vereinsflieger bucht. Ziel ist ein robustes, wartbares, barrierefreies und sicheres UI, das Verkaufsvorgänge, Admin‑Funktionen und Integration mit Home Assistant unterstützt.
+Das Frontend stellt die Benutzeroberfläche für den vereinsinternen Snackautomaten bereit. Es läuft auf einem Raspberry Pi mit Touchdisplay und wird als statische Web‑App vom Python/Flask‑Backend (localhost) gehostet, welches über einen Broker die Verkäufe in Vereinsflieger bucht. Ziel ist ein robustes, wartbares, barrierefreies und sicheres UI, das Verkaufsvorgänge, Admin‑Funktionen unterstützt.
 
 Ziele
 -----
 - Stabiles, schnelles UI für Verkaufsvorgänge (Startzeit < 5 s, Reaktionszeit < 100 ms)
-- Integration der Zahlungs‑/NFC‑Schnittstelle über das Backend
+- Integration der NFC‑Schnittstelle über das Backend
 - Admin‑Dashboard: PIN‑geschützt, Slot‑Tests, Preisverwaltung, Sync, OTA‑Updates
-- Monitoring‑Integration (Home Assistant über MQTT oder REST)
-- Starke Sicherheitsvorgaben (CSP, keine sensiblen Daten im Repo, API‑Key nur im Speicher)
 - Vollständige Build‑Artefakte, die vom Flask‑Backend ausgeliefert werden
 
 Technologieübersicht
@@ -57,7 +55,6 @@ Wichtige Anforderungen an das UI
    - Optimierte Assets (Bilder, SVGs), Code‑Splitting für große Routen
 
 4. Sicherheit
-   - Content Security Policy (CSP) festlegen und einhalten
    - Keine sensiblen Daten in Code oder im lokalen Storage
    - Keine direkte Hardwaresteuerung im Frontend — nur über Backend auf localhost
 
@@ -74,7 +71,7 @@ Entwicklung — Setup (Kurz)
 3. Dev Server: `npm run dev` (Vite — HMR für schnellstes Feedback)
 4. Build für Produktion: `npm run build` → erzeugt `dist/`
 
-Wichtig: Die erzeugten statischen Dateien werden vom Python/Flask‑Backend gehostet. Abstimmung mit `backend/` erforderlich: Zielpfad und CORS/Headers (CSP) abstimmen.
+Wichtig: Die erzeugten statischen Dateien werden vom Python/Flask‑Backend gehostet. Abstimmung mit `backend/` erforderlich: Zielpfad und CORS/Headers (CSP) abstimmen. Das Backend wird zu einer Flask API umgebaut.
 
 Build/Deployment
 ----------------
