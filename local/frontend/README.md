@@ -42,7 +42,7 @@ Datei‑/Komponentenstruktur (Empfehlung)
 Wichtige Anforderungen an das UI
 -------------------------------
 1. Nutzer‑Flows
-   - Snack‑Kauf: Startbildschirm → NFC-Login → Produktauswahl → Ausgabe+Buchung → Bestätigung
+   - Snack‑Kauf: Startbildschirm → NFC-Login → Produktauswahl → Ausgabe+Buchung → Bestätigung der Ausgabe auf dem Display und Danke für die Nutzung der Packstation
    - Admin‑Modus: PIN‑eingabe (nur verfügbar für Spezielle NutzerIDs) → Admin‑Dashboard (Slot‑Test, Sync, OTA, Sperren)
    - Home Assistant: Status, Temperatur, Türzustand, Sperrschalter (anzeigen/aktualisieren)
 
@@ -60,30 +60,6 @@ Wichtige Anforderungen an das UI
    - Content Security Policy (CSP) festlegen und einhalten
    - Keine sensiblen Daten in Code oder im lokalen Storage
    - Keine direkte Hardwaresteuerung im Frontend — nur über Backend auf localhost
-
-API / Backend‑Contract (Kurzbeschreibung)
------------------------------------------
-Das Frontend kommuniziert ausschließlich mit dem lokalen Backend (localhost). Beispiele (vereinbartes Contract‑Format):
-
-- GET /api/items
-  - Antwort: Liste verfügbarer Produkte mit id, name, price, slot, image, stock
-
-- POST /api/purchase
-  - Payload: { itemId, paymentMethod } (NFC wird vom Backend verarbeitet)
-  - Antwort: { success, message, dispenseCommand }
-
-- POST /api/admin/auth
-  - Payload: { pin }
-  - Antwort: { token } (Session token kurzlebig, trotzdem API‑Key für Backend Requests vorhanden)
-
-- POST /api/admin/slot-test
-  - Payload: { slotId }
-  - Antwort: { success, details }
-
-- WebSocket / MQTT (optional)
-  - Für Live‑Statusupdates (Tür, Temperatur, Dispense Events)
-
-Alle Requests müssen Header `X-API-KEY: <key>` enthalten; der Key wird zur Laufzeit vom Backend in die App injiziert (nicht ins Repo).
 
 Design‑ und UI‑Richtlinien
 -------------------------
