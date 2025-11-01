@@ -82,7 +82,7 @@ function cancel() {
 
 function simulate() {
   // Development helper to test flow without actual hardware.
-  nfc.simulateScan('demo-user');
+  nfc.simulateScan();
 }
 </script>
 
