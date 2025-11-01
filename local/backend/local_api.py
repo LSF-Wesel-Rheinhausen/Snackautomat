@@ -1,6 +1,7 @@
 import logging
 
-from flask import Flask, request, jsonify, CORS
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import worker
 import flask
 import api_caller, wifi_manager, read_nfc
@@ -45,7 +46,7 @@ def get_products():
         products = {}
         return products, 500
 
-@app.route('/get_User_Info', methods=['GET'])
+@app.route('/get_user_info', methods=['GET'])
 def login():
     nfc_id = read_nfc.read_uid()
     if nfc_id:
