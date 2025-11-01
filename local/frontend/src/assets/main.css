@@ -1,0 +1,76 @@
+:root {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 18px;
+  color-scheme: light;
+  background-color: var(--surface-ground);
+  color: var(--text-color);
+  touch-action: manipulation;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-ground);
+  color: var(--text-color);
+}
+
+#app {
+  min-height: 100vh;
+  min-width: 100vw;
+}
+
+button {
+  font-family: inherit;
+}
+
+.touch-button {
+  min-height: 64px;
+  font-size: 1.25rem;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.kiosk-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.24s ease, opacity 0.24s ease;
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  transform: translateX(40px);
+  opacity: 0;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(40px);
+  opacity: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 4px;
+}

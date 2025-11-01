@@ -107,6 +107,20 @@ Offene Punkte / Empfehlungen
 - Session‑Management: kurzlebige Token + In‑Memory Speicherung
 - Monitoring/Logging: Frontend Errors an Backend / Sentry‑ähnlichen Dienst (optional intern)
 
+Frontend Implementierung (Stand 2025-10-21)
+------------------------------------------
+- Einstiegspunkt: `local/frontend/index.html`, gebundled via Vite (`dist/`)
+- Vue 3 + TypeScript mit PrimeVue 4 für UI, Pinia für State, Vue Router für Flows
+- Entwicklungsstart: `npm install` & `npm run dev` (Port 4173, `--host 0.0.0.0`)
+- Qualität: `npm run build` (führt `vue-tsc` + Produktionsbuild), `npm run test:unit` (Vitest)
+- Hauptpfade:
+  - `src/pages/kiosk/` — Benutzerflow (Landing, Scan, Katalog, Checkout, Confirmation)
+  - `src/pages/admin/` — Admin-Login & Dashboard (PIN-Pad, Slot-Tests, Netzwerk)
+  - `src/stores/` — Pinia Stores (`session`, `items`, `admin`)
+  - `src/composables/` — Backend-Integration (`useApi`, `useNfc`, `useMachineStatus`)
+- Assets liegen in `public/` (z. B. Logo) und `src/assets/` (Stile, Fonts)
+- API Basis-URL: `VITE_API_BASE_URL` (Fallback `/api`), erwartete Endpunkte siehe Stores/Composables
+
 Kontakt / Maintainer
 --------------------
 LSF Wesel‑Rheinhausen Entwicklerteam — GitHub: `github.com/LSF-Wesel-Rheinhausen/Snackautomat`
