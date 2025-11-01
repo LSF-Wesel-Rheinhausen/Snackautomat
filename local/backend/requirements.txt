@@ -1,2 +1,9 @@
 pyserial
-tk
+jwt
+flask
+requests
+dotenv
+board
+busio
+digitalio
+adafruit_pn532
