@@ -63,7 +63,7 @@ Design‑ und UI‑Richtlinien
 -------------------------
 - Nutze PrimeVue Komponenten nur dort, wo sie Accessibility‑ und Performanceanforderungen erfüllen
 - Konsistente Farbpalette, kontrastreich und touchfreundlich
-- Animationen dezent und performant (prefer CSS transitions)
+- Animationen dezent und performant (prefer CSS transitions), aber gerne genutzt für moderne UX
 
 Entwicklung — Setup (Kurz)
 --------------------------
@@ -105,7 +105,6 @@ Offene Punkte / Empfehlungen
 ---------------------------
 - Pinia als zentraler Store für Session/Warenkorb empfohlen
 - Session‑Management: kurzlebige Token + In‑Memory Speicherung
-- Mechanismus zum sicheren Injezieren des API‑Keys durch Backend (z. B. HTML Template Variable oder initiales `/api/config` Request)
 - Monitoring/Logging: Frontend Errors an Backend / Sentry‑ähnlichen Dienst (optional intern)
 
 Kontakt / Maintainer
