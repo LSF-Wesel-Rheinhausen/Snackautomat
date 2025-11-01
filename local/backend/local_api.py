@@ -44,7 +44,7 @@ def get_products():
         products = {}
         return products, 500
 
-@app.route('/get_User_Info', methods=['POST'])
+@app.route('/get_User_Info', methods=['GET'])
 def login():
     nfc_id = read_nfc.read_once()
     if nfc_id:
