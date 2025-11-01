@@ -10,6 +10,3 @@ def read_uid():
     )
     uid = result.stdout.strip()
     return uid or None
-
-
-print(read_uid())
