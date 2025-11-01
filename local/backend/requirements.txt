@@ -1,6 +1,7 @@
 pyserial
 PyJWT
 flask
+flask_cors
 requests
 dotenv
 board
