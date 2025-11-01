@@ -3,7 +3,7 @@ import logging
 from flask import Flask, request, jsonify
 import local.backend.worker as worker
 import flask
-from local.backend import api_caller, wifi_manager
+from local.backend import api_caller, wifi_manager, read_nfc
 import os
 
 app = Flask(__name__, static_url_path='/static')
@@ -46,14 +46,18 @@ def get_products():
 
 @app.route('/get_User_Info', methods=['POST'])
 def login():
-    data = flask.request.get_json()
-    rfid = data.get('rfid_id')
-    try:
-        user_info = api_caller.get_user_by_rfid(rfid)
-        return user_info, 200
-    except Exception as e:
-        logging.debug(f"Error getting user info for RFID {rfid}: {e}")
-        return {"error": "User not found"}, 500
+    nfc_id = read_nfc.read_nfc()
+    if nfc_id:
+        rfid = jsonify(nfc_id).get_json()
+        try:
+            user_info = api_caller.get_user_by_rfid(rfid)
+            return user_info, 200
+        except Exception as e:
+            logging.debug(f"Error getting user info for RFID {rfid}: {e}")
+            return {"error": "User not found"}, 500
+    else:
+        return jsonify({"error": "Failed to read NFC tag"}), 500
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -147,13 +151,6 @@ def ota_update():
         logging.debug(f"Error during OTA update: {e}")
         return {"error": str(e)}, 500
 
-@app.route("/read_nfc", methods=['POST'])
-def read_nfc():
-    nfc_id = read_nfc.read_nfc()
-    if nfc_id:
-        return jsonify({"nfc_id": nfc_id}), 200
-    else:
-        return jsonify({"error": "Failed to read NFC tag"}), 500
 
 if __name__ == '__main__':
     if os.getenv('FLASK_ENV') == 'production':
