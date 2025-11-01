@@ -1,12 +1,13 @@
 import logging
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, CORS
 import worker
 import flask
 import api_caller, wifi_manager, read_nfc
 import os
 
 app = Flask(__name__, static_url_path='/static')
+CORS(app)
 from dotenv import load_dotenv
 load_dotenv()
 
