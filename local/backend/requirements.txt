@@ -1,5 +1,5 @@
 pyserial
-jwt
+PyJWT
 flask
 requests
 dotenv
