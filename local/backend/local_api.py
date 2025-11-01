@@ -1,9 +1,9 @@
 import logging
 
 from flask import Flask, request, jsonify
-import local.backend.worker as worker
+import worker
 import flask
-from local.backend import api_caller, wifi_manager, read_nfc
+import api_caller, wifi_manager, read_nfc
 import os
 
 app = Flask(__name__, static_url_path='/static')
