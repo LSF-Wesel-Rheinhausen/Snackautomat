@@ -6,7 +6,7 @@ from adafruit_pn532.spi import PN532_SPI
 spi = busio.SPI(board.SCK, board.MOSI, board.MISO)
 cs_pin = DigitalInOut(board.D5)  # anpassen, je nach Verdrahtung
 
-pn532 = adafruit_pn532.PN532_SPI(spi, cs_pin, debug=False)
+pn532 = PN532_SPI(spi, cs_pin, debug=False)
 pn532.SAM_configuration()
 
 
