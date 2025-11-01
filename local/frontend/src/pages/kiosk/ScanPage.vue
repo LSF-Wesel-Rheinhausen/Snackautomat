@@ -55,7 +55,11 @@ const showDemoButton = import.meta.env.DEV;
 
 onMounted(async () => {
   // Begin listening for NFC events immediately and warm up catalog data.
-  nfc.start();
+  if (nfc.isSupported) {
+    await nfc.start();
+  } else {
+    sessionStore.setKioskMessage('Web NFC wird nicht unterstützt. Bitte Admin kontaktieren.');
+  }
   await itemsStore.fetchItems();
 });
 
