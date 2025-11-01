@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+// Simple reusable PIN pad – emit events only, no security logic here.
 import { computed } from 'vue';
 import Button from 'primevue/button';
 
@@ -44,15 +45,18 @@ const digits = computed(() => ['1', '2', '3', '4', '5', '6', '7', '8', '9']);
 const pin = computed(() => props.modelValue ?? '');
 
 function append(value: string) {
+  // Respect the configured PIN length so admins can change requirement later.
   if (pin.value.length >= props.length) return;
   emit('update:modelValue', `${pin.value}${value}`);
 }
 
 function erase() {
+  // Remove the last entered digit; UI shows this instantly via display dots.
   emit('update:modelValue', pin.value.slice(0, -1));
 }
 
 function submit() {
+  // Only emit submit when enough digits are provided; avoids half PIN calls.
   if (pin.value.length === props.length) {
     emit('submit', pin.value);
   }

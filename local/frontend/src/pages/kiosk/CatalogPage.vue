@@ -5,7 +5,7 @@
         <h2>Produktübersicht</h2>
         <p>Wählen Sie Ihre Snacks. Alle Preise in {{ currency }}.</p>
       </div>
-      <div class="toolbar">
+     <div class="toolbar">
         <SelectButton
           v-model="selectedCategory"
           :options="categoryOptions"
@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+// Product selection view – all inventory mutations delegate to Pinia stores.
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
@@ -69,6 +70,7 @@ const { items } = storeToRefs(itemsStore);
 const selectedCategory = ref<string | null>(null);
 
 onMounted(() => {
+  // Ensure catalog data is available even if the visitor skipped the scan step.
   itemsStore.fetchItems();
 });
 
@@ -84,12 +86,15 @@ const categoryOptions = computed(() => [
 
 const filteredItems = computed(() => {
   if (!selectedCategory.value) {
+    // No filter chosen -> return the entire catalog list.
     return items.value;
   }
+  // Only show snacks that match the active category filter.
   return items.value.filter((item) => item.category === selectedCategory.value);
 });
 
 function addToCart(item: SnackItem) {
+  // Delegate the state change to Pinia so other views stay in sync.
   sessionStore.addToCart(item);
   toast.add({
     severity: 'success',
@@ -100,6 +105,7 @@ function addToCart(item: SnackItem) {
 }
 
 function goToCheckout() {
+  // Navigate client to the checkout summary view.
   router.push({ name: 'kiosk-checkout' });
 }
 </script>

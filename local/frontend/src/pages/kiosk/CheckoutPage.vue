@@ -15,29 +15,33 @@
           </div>
           <div class="price">{{ formatPrice(item.price) }}</div>
           <div class="quantity-control">
+            <!-- Quantity selector clamps within available stock -->
             <InputNumber
-+              v-model="quantities[item.id]"
-               :min="0"
-               :max="item.stock"
-               :step="1"
-               showButtons
-               buttonLayout="horizontal"
-               decrementButtonClass="p-button-rounded p-button-text"
-               incrementButtonClass="p-button-rounded p-button-text"
-               incrementButtonIcon="pi pi-plus"
-               decrementButtonIcon="pi pi-minus"
-               aria-label="Anzahl für {{ item.name }}"
-               @update:modelValue="(value) => updateQuantity(item.id, value)"
+              v-model="quantities[item.id]"
+              :min="0"
+              :max="item.stock"
+              :step="1"
+              showButtons
+              buttonLayout="horizontal"
+              decrementButtonClass="p-button-rounded p-button-text"
+              incrementButtonClass="p-button-rounded p-button-text"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+              aria-label="Anzahl für {{ item.name }}"
+              @update:modelValue="(value) => updateQuantity(item.id, value)"
              />
           </div>
           <div class="line-total">{{ formatPrice(item.quantity * item.price) }}</div>
+          <!-- Remove button lets user drop items quickly -->
           <Button icon="pi pi-times" rounded text severity="danger" @click="remove(item.id)" />
         </div>
       </div>
     </div>
     <aside class="checkout-summary" aria-label="Zusammenfassung">
+      <!-- Summary card keeps admin-friendly numbers visible during checkout -->
       <h2>Zusammenfassung</h2>
       <ul>
+        <!-- Totals update reactively as quantities change -->
         <li>
           <span>Zwischensumme</span>
           <span>{{ formatPrice(totalPrice) }}</span>
@@ -70,6 +74,7 @@
 </template>
 
 <script setup lang="ts">
+// Checkout stage handles final validation; backend remains source of truth for balances.
 import { computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
@@ -93,15 +98,18 @@ const quantities = reactive<Record<string, number>>({});
 
 onMounted(() => {
   if (!cartItems.value.length) {
+    // Redirect to catalog when checkout was reached without any cart data.
     router.replace({ name: 'kiosk-catalog' });
     return;
   }
   cartItems.value.forEach((item) => {
+    // Mirror quantities in a local reactive map for the PrimeVue InputNumber binding.
     quantities[item.id] = item.quantity;
   });
 });
 
 function formatPrice(amount: number) {
+  // Use German locale formatting to match physical kiosk expectations.
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: currency.value
@@ -109,16 +117,19 @@ function formatPrice(amount: number) {
 }
 
 function updateQuantity(itemId: string, quantity: number) {
+  // Keep Pinia as single source of truth; `quantity ?? 0` protects against undefined events.
   sessionStore.updateQuantity(itemId, quantity ?? 0);
 }
 
 function remove(itemId: string) {
+  // Drop the entry from both store and helper dictionary.
   sessionStore.removeItem(itemId);
   delete quantities[itemId];
 }
 
 async function checkout() {
   try {
+    // Keep payload minimal; backend enriches it with slot + price verification.
     const payload = {
       userId: sessionStore.user?.id,
       items: cartItems.value.map((item) => ({ id: item.id, quantity: item.quantity })),
@@ -130,11 +141,13 @@ async function checkout() {
     toast.add({ severity: 'success', summary: 'Vielen Dank!', detail: 'Snackausgabe gestartet', life: 2000 });
     router.replace({ name: 'kiosk-confirmation' });
   } catch (error) {
+    // Keep the toast generic; backend already logs specific issues.
     toast.add({ severity: 'error', summary: 'Fehler', detail: 'Checkout nicht möglich', life: 3000 });
   }
 }
 
 function goToCatalog() {
+  // Allow user to continue shopping without resetting the session.
   router.push({ name: 'kiosk-catalog' });
 }
 </script>

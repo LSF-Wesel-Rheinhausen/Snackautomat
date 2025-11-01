@@ -1,3 +1,7 @@
+/**
+ * Handles NFC login stream via Server-Sent Events.
+ * Keeps reconnection logic local so components remain slim.
+ */
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useSessionStore } from '@/stores/session';
 import { ApiError, resolveApiUrl, useApi } from './useApi';
@@ -25,6 +29,7 @@ export function useNfc() {
       return;
     }
 
+    // Build the absolute streaming endpoint informed by `VITE_API_BASE_URL`.
     const url = resolveApiUrl(STREAM_ENDPOINT);
     const source = new EventSource(url);
 
@@ -38,12 +43,14 @@ export function useNfc() {
       message.value = 'Keine Verbindung zum Kartenleser. Erneuter Versuch ...';
       isListening.value = false;
       disconnect();
+      // Retry after a short delay to avoid spamming the backend.
       setTimeout(() => {
         attachEventSource();
       }, 2_000);
     };
 
     source.addEventListener('heartbeat', () => {
+      // Heartbeats confirm the backend reader service is alive.
       lastHeartbeat.value = new Date();
     });
 
@@ -72,6 +79,7 @@ export function useNfc() {
     } catch (err) {
       if (err instanceof ApiError) {
         message.value = 'Simulierter Scan fehlgeschlagen.';
+        // Allow front-end-only testing by seeding a demo user when backend call fails.
         sessionStore.startSession({
           id: userId,
           name: 'Demo Nutzer',
@@ -84,6 +92,7 @@ export function useNfc() {
   }
 
   onBeforeUnmount(() => {
+    // Ensure stream is closed when component using this composable unmounts.
     disconnect();
   });
 

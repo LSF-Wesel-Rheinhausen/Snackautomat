@@ -1,5 +1,10 @@
+/**
+ * Small typed fetch wrapper shared across composables/stores.
+ * Encapsulates base URL handling so deployments can tweak `VITE_API_BASE_URL` without touching code.
+ */
 import { ref } from 'vue';
 
+// Allow deployments to override the REST endpoint; defaults to Flask proxy path.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 export interface ApiRequestOptions extends RequestInit {
@@ -32,6 +37,7 @@ function buildUrl(path: string, query?: ApiRequestOptions['query']) {
     : base.pathname;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = new URL(base.toString());
+  // Ensure we merge base path + specific path without duplicating slashes.
   url.pathname = `${normalizedBasePath}${normalizedPath}`;
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
@@ -64,6 +70,7 @@ async function request<T>(path: string, options: ApiRequestOptions = {}): Promis
   const payload = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
+    // Forward backend payloads when possible to aid diagnostics in the UI.
     throw new ApiError(
       `Request to ${path} failed with status ${response.status}`,
       response.status,
@@ -102,6 +109,7 @@ export function useApi() {
   return {
     loading,
     error,
+    // Shorthand HTTP helpers used throughout stores/composables.
     get: <T>(path: string, options: ApiRequestOptions = {}) =>
       run<T>(path, { ...options, method: 'GET' }),
     post: <T>(path: string, payload?: unknown, options: ApiRequestOptions = {}) =>

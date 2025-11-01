@@ -1,10 +1,12 @@
 <template>
   <section class="confirmation" aria-live="polite">
     <div class="card">
+      <!-- Confirmation view thanks the member and lists purchased items -->
       <i class="pi pi-check-circle" aria-hidden="true"></i>
       <h2>Snackausgabe gestartet</h2>
       <p>Bitte entnehmen Sie Ihre Snacks. Vielen Dank für die Nutzung der Packstation!</p>
       <div v-if="receipt" class="receipt">
+        <!-- Render receipt only when backend returned sale details -->
         <h3>Beleg</h3>
         <ul>
           <li v-for="item in receipt.items" :key="item.id">
@@ -25,6 +27,7 @@
 </template>
 
 <script setup lang="ts">
+// Post-checkout acknowledgement – keep minimal to avoid stale session state.
 import Button from 'primevue/button';
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -38,13 +41,16 @@ const currency = computed(() => sessionStore.currency);
 
 onMounted(() => {
   if (!receipt.value) {
+    // If there is no receipt data (e.g. manual navigation), bounce back to landing.
     router.replace({ name: 'kiosk-landing' });
   } else {
+    // Inform the kiosk message area that dispensing is in progress.
     sessionStore.setKioskMessage('Snackausgabe läuft – bitte entnehmen.');
   }
 });
 
 function formatPrice(amount: number) {
+  // Mirror checkout formatting for consistency on confirmation screen.
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: currency.value
@@ -52,6 +58,7 @@ function formatPrice(amount: number) {
 }
 
 function startNew() {
+  // Reset session entirely so the next member starts fresh.
   sessionStore.endSession();
   router.push({ name: 'kiosk-landing' });
 }

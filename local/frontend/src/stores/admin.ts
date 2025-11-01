@@ -1,3 +1,7 @@
+/**
+ * Admin store tracks privileged session data and machine maintenance actions.
+ * Token handling is deliberately in-memory; backend is responsible for TTL and revocation.
+ */
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type {
@@ -30,7 +34,9 @@ export const useAdminStore = defineStore('admin', () => {
   const lastError = ref<string | null>(null);
   const busyAction = ref<string | null>(null);
 
+  // True once backend-issued token and profile are present.
   const isAuthenticated = computed(() => Boolean(profile.value && authToken.value));
+  // Guards against brute force PIN attempts from the kiosk interface.
   const hasReachedPinLimit = computed(() => pinAttempts.value >= maxPinAttempts.value);
 
   function setAuthPayload(payload: AuthResponse) {
@@ -54,6 +60,7 @@ export const useAdminStore = defineStore('admin', () => {
     }
 
     try {
+      // Backend validates the PIN and issues a short-lived token for subsequent requests.
       const { data } = await api.post<AuthResponse>('/admin/auth/pin', { pin });
       setAuthPayload(data);
       await fetchStatus();
@@ -75,12 +82,14 @@ export const useAdminStore = defineStore('admin', () => {
     } catch (error) {
       console.warn('Logout fehlgeschlagen', error);
     } finally {
+      // Always drop credentials locally even if backend call fails.
       clearAuth();
     }
   }
 
   async function fetchStatus() {
     if (!isAuthenticated.value) {
+      // Skip expensive requests when no admin is logged in.
       return;
     }
     try {
@@ -97,10 +106,12 @@ export const useAdminStore = defineStore('admin', () => {
   async function runSlotTest(slot: string) {
     busyAction.value = `slot:${slot}`;
     try {
+      // Slot test instructs backend to rotate/dispense hardware for diagnostics.
       const { data } = await api.post<SlotTestResult>(`/admin/slots/${slot}/test`);
       await fetchStatus();
       return data;
     } finally {
+      // Busy flag must always reset to keep UI buttons responsive.
       busyAction.value = null;
     }
   }
@@ -108,6 +119,7 @@ export const useAdminStore = defineStore('admin', () => {
   async function triggerSync() {
     busyAction.value = 'sync';
     try {
+      // Asks backend to push pending bookings to Vereinsflieger.
       await api.post('/admin/sync');
       await fetchStatus();
     } finally {
@@ -118,6 +130,7 @@ export const useAdminStore = defineStore('admin', () => {
   async function triggerOtaUpdate() {
     busyAction.value = 'ota';
     try {
+      // Triggers the backend OTA mechanism (Raspberry Pi service).
       await api.post('/admin/ota/start');
       await fetchStatus();
     } finally {
@@ -128,6 +141,7 @@ export const useAdminStore = defineStore('admin', () => {
   async function updateNetworkSettings(payload: NetworkSettingsPayload) {
     busyAction.value = 'network';
     try {
+      // Delegates Wi-Fi reconfiguration to backend, which updates wpa_supplicant etc.
       await api.post('/admin/network', payload);
       await fetchStatus();
     } finally {

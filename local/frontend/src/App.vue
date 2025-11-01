@@ -1,8 +1,9 @@
 <template>
   <div id="app-shell">
-    <Toast position="bottom-center" />
-    <router-view v-slot="{ Component, route }">
-      <Transition :name="String(route.meta.transition ?? 'fade')" mode="out-in">
+    <!-- Top-level shell wraps around routed layouts/pages -->
+        <Toast position="bottom-center" /> <!-- Global toast instance -->
+    <router-view v-slot="{ Component, route }"> <!-- Render active route component -->
+      <Transition :name="String(route.meta.transition ?? 'fade')" mode="out-in"> <!-- Use route meta to select animation -->
         <component :is="Component" />
       </Transition>
     </router-view>
@@ -10,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+// App.vue only initializes shared UI primitives like Toast.
 import Toast from 'primevue/toast';
 </script>
 

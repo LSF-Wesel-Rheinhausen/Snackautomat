@@ -1,3 +1,7 @@
+/**
+ * Handles the kiosk user session lifecycle and cart state.
+ * Note: state is intentionally in-memory to avoid persisting sensitive data.
+ */
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { CartItem, NfcUser, PurchaseReceipt, SnackItem } from '@/types/models';
@@ -16,16 +20,21 @@ export const useSessionStore = defineStore('session', () => {
   const lastReceipt = ref<PurchaseReceipt | null>(null);
   const kioskMessage = ref<string | null>(null);
 
+  // Indicates whether the kiosk currently has an identified user.
   const isAuthenticated = computed(() => Boolean(user.value));
+  // Total count of items placed into the cart; used for badges and capacity checks.
   const totalItems = computed(() =>
     cart.value.reduce((sum, item) => sum + item.quantity, 0)
   );
+  // Aggregated price based on quantity * unit price so checkout view stays reactive.
   const totalPrice = computed(() =>
     cart.value.reduce((sum, item) => sum + item.quantity * item.price, 0)
   );
+  // Persist currency info with cart; fallback ensures UI remains readable without data.
   const currency = computed(() => cart.value[0]?.currency ?? 'EUR');
 
   function startSession(nfcUser: NfcUser) {
+    // Store the authenticated user details supplied by the backend.
     user.value = nfcUser;
     cart.value = [];
     awaitingNfcScan.value = false;
@@ -33,6 +42,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function endSession() {
+    // Reset everything once the user leaves to avoid leaking previous state.
     user.value = null;
     cart.value = [];
     lastReceipt.value = null;
@@ -40,6 +50,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function setKioskMessage(message: string | null) {
+    // Allow pages to surface contextual instructions or status updates.
     kioskMessage.value = message;
   }
 
@@ -49,6 +60,7 @@ export const useSessionStore = defineStore('session', () => {
 
   function addToCart(item: SnackItem, quantity = 1) {
     if (quantity <= 0) return;
+    // Prevent overselling by clamping to the slot stock reported by backend.
     const exists = cart.value.find((entry) => entry.id === item.id);
     if (exists) {
       exists.quantity = Math.min(exists.quantity + quantity, item.stock);
@@ -62,15 +74,18 @@ export const useSessionStore = defineStore('session', () => {
     if (!entry) return;
     entry.quantity = Math.min(entry.stock, Math.max(0, quantity));
     if (entry.quantity === 0) {
+      // Drop zero-quantity items entirely so the cart list stays tidy.
       cart.value = cart.value.filter((item) => item.id !== itemId);
     }
   }
 
   function removeItem(itemId: string) {
+    // Hard-remove an item regardless of quantity (used by delete button).
     cart.value = cart.value.filter((item) => item.id !== itemId);
   }
 
   function clearCart() {
+    // Utility for checkout completion and session teardown.
     cart.value = [];
   }
 
@@ -79,6 +94,7 @@ export const useSessionStore = defineStore('session', () => {
   }
 
   function resetCheckoutState() {
+    // Keep receipt history minimal to avoid mixing old confirmations.
     lastReceipt.value = null;
   }
 

@@ -1,4 +1,5 @@
 <template>
+  <!-- Shared kiosk chrome: header with status + footer hint -->
   <div class="kiosk-layout">
     <header class="kiosk-header">
       <div class="brand">
@@ -8,7 +9,9 @@
           <p class="brand-subtitle">LSF Wesel-Rheinhausen</p>
         </div>
       </div>
+      <!-- Machine status indicators render here -->
       <HomeStatusPanel />
+      <!-- User information is optional (pre-scan view should not break) -->
       <div class="user-area" v-if="user">
         <span class="user-name">Hallo {{ user.name }}!</span>
         <span class="user-balance">
@@ -40,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+// Layout only handles navigation affordances and leaves business logic to child pages.
 import Button from 'primevue/button';
 import HomeStatusPanel from '@/components/HomeStatusPanel.vue';
 import { useRouter } from 'vue-router';
@@ -50,6 +54,7 @@ import { useSessionStore } from '@/stores/session';
 const router = useRouter();
 const sessionStore = useSessionStore();
 const { user } = storeToRefs(sessionStore);
+// Ensure we display balance with two decimals even when backend returns integer cents.
 const userBalance = computed(() => (user.value ? user.value.balance.toFixed(2) : '0.00'));
 
 function goToAdmin() {

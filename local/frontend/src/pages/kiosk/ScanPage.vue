@@ -13,6 +13,7 @@
         Halten Sie die Karte ruhig an das Lesegerät. Nach dem Scan können Sie sofort einkaufen.
       </p>
       <div class="actions">
+        <!-- Users can cancel back to landing if they change their mind -->
         <Button
           label="Abbrechen"
           severity="secondary"
@@ -33,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+// NFC login screen – keep watchers in sync with session store transitions.
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -52,11 +54,13 @@ const message = computed(() => kioskMessage.value ?? nfc.message.value);
 const showDemoButton = import.meta.env.DEV;
 
 onMounted(async () => {
+  // Begin listening for NFC events immediately and warm up catalog data.
   nfc.start();
   await itemsStore.fetchItems();
 });
 
 onBeforeUnmount(() => {
+  // Free the EventSource when leaving the page.
   nfc.stop();
 });
 
@@ -64,17 +68,20 @@ watch(
   () => isAuthenticated.value,
   (authenticated) => {
     if (authenticated) {
+      // Once session exists, move visitor to the product catalog automatically.
       router.replace({ name: 'kiosk-catalog' });
     }
   }
 );
 
 function cancel() {
+  // Ending the session ensures any partial state is discarded safely.
   sessionStore.endSession();
   router.push({ name: 'kiosk-landing' });
 }
 
 function simulate() {
+  // Development helper to test flow without actual hardware.
   nfc.simulateScan('demo-user');
 }
 </script>

@@ -1,5 +1,6 @@
 <template>
   <section class="status-panel" aria-label="Systemstatus">
+    <!-- Tile shows live temperature from machine sensors -->
     <div class="status-tile">
       <i class="pi pi-thermometer" aria-hidden="true"></i>
       <div>
@@ -7,6 +8,7 @@
         <span class="value">{{ environmentDisplay.temperature }}</span>
       </div>
     </div>
+    <!-- Door tile communicates whether the cabinet is open or locked -->
     <div class="status-tile">
       <i
         :class="['pi', environmentDisplay.doorOpen ? 'pi-lock-open' : 'pi-lock']"
@@ -17,6 +19,7 @@
         <span class="value">{{ environmentDisplay.doorStatus }}</span>
       </div>
     </div>
+    <!-- Sync tile reflects backend connectivity and pending bookings -->
     <div class="status-tile">
       <i class="pi pi-sync" aria-hidden="true"></i>
       <div>
@@ -28,11 +31,13 @@
 </template>
 
 <script setup lang="ts">
+// Lightweight status readout used in kiosk header.
 import { computed } from 'vue';
 import { useMachineStatus } from '@/composables/useMachineStatus';
 
 const { environment, sync } = useMachineStatus(true);
 
+// Format sensor readings so templates stay clean.
 const environmentDisplay = computed(() => {
   if (!environment.value) {
     return {
@@ -50,8 +55,10 @@ const environmentDisplay = computed(() => {
 
 const syncStatus = computed(() => {
   if (!sync.value) return 'Keine Daten';
+  // Display offline indicator when backend heartbeat fails.
   if (!sync.value.backendOnline) return 'Backend offline';
   if (sync.value.pendingJobs > 0) {
+    // Show how many sales are still awaiting booking.
     return `${sync.value.pendingJobs} ausstehend`;
   }
   return sync.value.lastSync ? 'Synchron' : 'Bereit';

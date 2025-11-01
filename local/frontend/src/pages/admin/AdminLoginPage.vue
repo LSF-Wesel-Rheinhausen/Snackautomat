@@ -1,6 +1,7 @@
 <template>
   <section class="login">
     <div class="card">
+      <!-- Admins must pass PIN challenge before accessing maintenance area -->
       <h2>PIN eingeben</h2>
       <p>Der Adminbereich ist geschützt. Bitte geben Sie Ihre vierstellige PIN ein.</p>
       <Message v-if="statusMessage" :severity="statusSeverity">{{ statusMessage }}</Message>
@@ -14,6 +15,7 @@
 </template>
 
 <script setup lang="ts">
+// PIN login screen for admin flows; keep retry behaviour aligned with admin store limits.
 import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import Button from 'primevue/button';
@@ -28,14 +30,17 @@ const toast = useToast();
 const adminStore = useAdminStore();
 
 const pin = ref('');
+// lastError + store state supply hints for wrong PIN attempts.
 
 const statusMessage = computed(() => adminStore.lastError);
+// Show warning styling once the PIN attempt limit has been reached.
 const statusSeverity = computed(() => (adminStore.hasReachedPinLimit ? 'warn' : 'info'));
 
 watch(
   () => adminStore.isAuthenticated,
   (authenticated) => {
     if (authenticated) {
+      // Successful authentication: redirect to requested admin route or dashboard.
       toast.add({ severity: 'success', summary: 'Erfolgreich', detail: 'Willkommen im Adminbereich', life: 2000 });
       const redirect = (route.query.redirect as string) ?? '/admin/dashboard';
       router.replace(redirect);
@@ -47,14 +52,17 @@ async function authenticate(value?: string) {
   const pinValue = value ?? pin.value;
   if (pinValue.length !== 4) return;
   try {
+    // Attempts PIN verification through admin store (backend validation).
     await adminStore.authenticateWithPin(pinValue);
   } catch (error) {
+    // Feedback toast keeps timing consistent with store retry counter.
     toast.add({ severity: 'error', summary: 'PIN falsch', detail: 'Bitte erneut versuchen', life: 2000 });
     pin.value = '';
   }
 }
 
 function cancel() {
+  // Return to kiosk landing without affecting current admin store state.
   router.push({ name: 'kiosk-landing' });
 }
 </script>

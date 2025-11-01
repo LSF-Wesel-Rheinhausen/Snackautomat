@@ -7,39 +7,24 @@
         Sie Ihre Pause. Alles in wenigen Sekunden.
       </p>
       <div class="hero-actions">
-        <Button
-          label="Jetzt scannen"
-          icon="pi pi-id-card"
-          size="large"
-          class="touch-button"
-          @click="goToScan"
-        />
-        <Button
-          label="Produkte ansehen"
-          icon="pi pi-list"
-          severity="secondary"
-          outlined
-          class="touch-button"
-          @click="goToCatalog"
-        />
+        <!-- Primary CTA routes to scan workflow -->
+        <Button label="Jetzt scannen" icon="pi pi-id-card" size="large" class="touch-button" @click="goToScan" />
+        <!-- Secondary CTA shows catalog without logging in -->
+        <Button label="Produkte ansehen" icon="pi pi-list" severity="secondary" outlined class="touch-button"
+          @click="goToCatalog" />
       </div>
     </div>
     <div class="featured" v-if="featuredItems.length">
       <h2>Beliebte Snacks</h2>
       <div class="featured-grid">
-        <SnackCard
-          v-for="item in featuredItems"
-          :key="item.id"
-          :item="item"
-          :disabled="true"
-          show-stock
-        />
+        <SnackCard v-for="item in featuredItems" :key="item.id" :item="item" :disabled="true" show-stock />
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+// Entry screen: only fetches catalog preview, defers logic to subsequent routes.
 import Button from 'primevue/button';
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -50,16 +35,19 @@ const router = useRouter();
 const itemsStore = useItemsStore();
 
 onMounted(() => {
+  // Preload catalog so subsequent navigation feels instant on Raspberry Pi hardware.
   itemsStore.fetchItems();
 });
 
 const featuredItems = computed(() => itemsStore.featuredItems);
 
 function goToScan() {
+  // Navigate into the NFC scanning route for authentication.
   router.push({ name: 'kiosk-scan' });
 }
 
 function goToCatalog() {
+  // Let curious visitors browse catalog without logging in.
   router.push({ name: 'kiosk-catalog' });
 }
 </script>

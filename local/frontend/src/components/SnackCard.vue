@@ -18,6 +18,7 @@
       <div class="price">
         {{ priceLabel }}
       </div>
+      <!-- Show allergy list so users can check at a glance. -->
       <ul v-if="item.allergens?.length" class="allergens">
         <li v-for="allergen in item.allergens" :key="allergen">
           {{ allergen }}
@@ -37,6 +38,7 @@
 </template>
 
 <script setup lang="ts">
+// Kiosk product tile. Keep logic here presentation-only; inventory lives in Pinia stores.
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
@@ -53,13 +55,16 @@ const emit = defineEmits<{
   (e: 'add', item: SnackItem): void;
 }>();
 
+// True if stock metadata marks the item as depleted.
 const isOutOfStock = computed(() => props.item.stock <= 0);
+// Friendly stock label for staff to quickly glance at.
 const stockLabel = computed(() => (props.item.stock <= 0 ? 'Leer' : `${props.item.stock}x`));
 const stockSeverity = computed(() => {
   if (props.item.stock <= 0) return 'danger';
   if (props.item.stock < 3) return 'warning';
   return 'success';
 });
+// Price label uses currency provided by backend.
 const priceLabel = computed(() => props.item.price.toFixed(2) + ' ' + props.item.currency);
 </script>
 

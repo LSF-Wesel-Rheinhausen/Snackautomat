@@ -29,6 +29,7 @@
         <template #title>Synchronisation &amp; Updates</template>
         <template #content>
           <div class="sync-grid">
+            <!-- Quick insight into queued jobs and update status -->
             <div>
               <span class="label">Letzte Synchronisation</span>
               <strong>{{ syncDisplay.lastSync }}</strong>
@@ -71,6 +72,7 @@
         <template #title>Netzwerk</template>
         <template #content>
           <form class="network-form" @submit.prevent="saveNetwork">
+            <!-- Form posts new Wi-Fi credentials to backend service -->
             <div class="field">
               <label for="ssid">SSID</label>
               <InputText id="ssid" v-model="networkForm.ssid" required autocomplete="off" />
@@ -101,6 +103,7 @@
       <template #title>Slots &amp; Hardware Tests</template>
       <template #content>
         <DataTable :value="slots" responsiveLayout="scroll" stripedRows>
+          <!-- Each row represents a hardware slot; backend supplies stock + health -->
           <Column field="slot" header="Slot" style="width: 8rem" />
           <Column field="productName" header="Produkt" />
           <Column field="stock" header="Bestand" style="width: 10rem" />
@@ -131,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+// Aggregates maintenance actions – keep API endpoints aligned with backend contract.
 import { computed, onMounted, reactive } from 'vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
@@ -146,6 +150,7 @@ const adminStore = useAdminStore();
 const toast = useToast();
 
 const status = computed(() => adminStore.status);
+// Slots list keeps DataTable reactive to backend updates.
 const slots = computed(() => status.value?.slots ?? []);
 const environmentDisplay = computed(() => {
   if (!status.value?.environment) {
@@ -187,8 +192,10 @@ const networkForm = reactive({
   ssid: '',
   password: ''
 });
+// Form values stay local until admin confirms changes.
 
 onMounted(async () => {
+  // Load machine status immediately after admin logs in.
   await adminStore.fetchStatus();
 });
 
@@ -211,6 +218,7 @@ async function runSync() {
     await adminStore.triggerSync();
     toast.add({ severity: 'success', summary: 'Synchronisiert', life: 2000 });
   } catch (error) {
+    // Highlight sync failures so admins know to check backend connectivity.
     toast.add({ severity: 'error', summary: 'Sync fehlgeschlagen', life: 2500 });
   }
 }
@@ -232,6 +240,7 @@ async function saveNetwork() {
     });
     toast.add({ severity: 'success', summary: 'Gespeichert', detail: 'Neues Netzwerk wird verbunden', life: 2500 });
   } catch (error) {
+    // Keep error generic because backend already masks sensitive network messages.
     toast.add({ severity: 'error', summary: 'Speichern fehlgeschlagen', life: 2500 });
   }
 }

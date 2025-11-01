@@ -1,3 +1,4 @@
+<!-- Wrapper for PIN-protected admin routes; keeps kiosk exit within easy reach. -->
 <template>
   <div class="admin-layout">
     <header class="admin-header">
@@ -36,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+// Layout isolation ensures admin UI can evolve without touching kiosk structure.
 import Button from 'primevue/button';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
@@ -50,6 +52,7 @@ function navigateBack() {
 }
 
 async function logout() {
+  // Explicit logout makes sure privileged features disappear immediately.
   await adminStore.logout();
   router.push({ name: 'kiosk-landing' });
 }

@@ -1,8 +1,14 @@
+/**
+ * Catalog store caches snack metadata for kiosk usage.
+ * Uses backend data when available, otherwise falls back to a mock set so
+ * kiosk UI stays usable during maintenance or offline scenarios.
+ */
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { SnackItem } from '@/types/models';
 import { useApi, ApiError } from '@/composables/useApi';
 
+// Local mock data used when backend catalog is unreachable during maintenance.
 const FALLBACK_ITEMS: SnackItem[] = [
   {
     id: 'snack-1',
@@ -45,8 +51,10 @@ export const useItemsStore = defineStore('items', () => {
   const items = ref<SnackItem[]>([]);
   const lastUpdated = ref<string | null>(null);
 
+  // Tells the UI when the catalog already has data in memory.
   const isLoaded = computed(() => items.value.length > 0);
   const categories = computed(() => {
+    // Build a count map so the kiosk can show the number of products per category tab.
     const unique = new Map<string, number>();
     items.value.forEach((item) => {
       unique.set(item.category, (unique.get(item.category) ?? 0) + 1);
@@ -56,38 +64,42 @@ export const useItemsStore = defineStore('items', () => {
       .sort((a, b) => a.name.localeCompare(b.name));
   });
 
-  const featuredItems = computed(() => items.value.slice(0, 4));
+const featuredItems = computed(() => items.value.slice(0, 4));
 
-  function setItems(payload: SnackItem[]) {
-    items.value = payload.filter((item) => item.isActive);
-    lastUpdated.value = new Date().toISOString();
+function setItems(payload: SnackItem[]) {
+  items.value = payload.filter((item) => item.isActive);
+  lastUpdated.value = new Date().toISOString();
+}
+
+async function fetchItems(force = false) {
+  if (isLoaded.value && !force) {
+    // Avoid re-fetching when data already exists unless explicitly forced.
+    return;
   }
-
-  async function fetchItems(force = false) {
-    if (isLoaded.value && !force) {
-      return;
+  try {
+    const { data } = await api.get<SnackItem[]>('/catalog/items');
+    setItems(data);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      console.warn('Katalog konnte nicht geladen werden, verwende Fallback', error);
     }
-    try {
-      const { data } = await api.get<SnackItem[]>('/catalog/items');
-      setItems(data);
-    } catch (error) {
-      if (error instanceof ApiError) {
-        console.warn('Katalog konnte nicht geladen werden, verwende Fallback', error);
-      }
-      setItems(FALLBACK_ITEMS);
-    }
+    // Ensure UI keeps functioning by falling back to predefined inventory.
+    setItems(FALLBACK_ITEMS);
   }
+}
 
-  function updateStock(slot: string, stock: number) {
-    const item = items.value.find((entry) => entry.slot === slot);
-    if (item) {
-      item.stock = stock;
-    }
+function updateStock(slot: string, stock: number) {
+  const item = items.value.find((entry) => entry.slot === slot);
+  if (item) {
+    // Kiosk keeps track of live stock levels for better UX.
+    item.stock = stock;
   }
+}
 
-  function findById(id: string) {
-    return items.value.find((item) => item.id === id);
-  }
+function findById(id: string) {
+  // Utility used by checkout when we only have an item identifier.
+  return items.value.find((item) => item.id === id);
+}
 
   return {
     ...api,

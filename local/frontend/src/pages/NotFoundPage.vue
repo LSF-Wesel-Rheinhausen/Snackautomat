@@ -8,12 +8,14 @@
 </template>
 
 <script setup lang="ts">
+// Basic fallback route – keep light to avoid masking real navigation issues.
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
 function goHome() {
+  // Send visitors back to the kiosk entry point.
   router.push({ name: 'kiosk-landing' });
 }
 </script>
