@@ -5,6 +5,5 @@ requests
 dotenv
 board
 adafruit-blinka
-digitalio
 adafruit_pn532
 adafruit-circuitpython-pn532
