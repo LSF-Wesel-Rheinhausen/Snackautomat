@@ -49,12 +49,13 @@ def login():
     nfc_id = read_nfc.read_uid()
     if nfc_id:
         rfid = jsonify(nfc_id).get_json()
+        logging.debug(f"Read NFC tag with RFID: {rfid}")
         try:
             user_info = api_caller.get_user_by_rfid(rfid)
             return user_info, 200
         except Exception as e:
             logging.debug(f"Error getting user info for RFID {rfid}: {e}")
-            return {"error": "User not found"}, 500
+            return {f'error": User  for RFID {rfid} not found'}, 500
     else:
         return jsonify({"error": "Failed to read NFC tag"}), 500
 
