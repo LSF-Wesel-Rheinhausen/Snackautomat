@@ -4,6 +4,7 @@ flask
 requests
 dotenv
 board
-busio
+adafruit-blinka
 digitalio
 adafruit_pn532
+adafruit-circuitpython-pn532
