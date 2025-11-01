@@ -48,7 +48,7 @@ def get_products():
 def login():
     nfc_id = read_nfc.read_uid()
     if nfc_id:
-        rfid = jsonify(nfc_id).get_json()
+        rfid = nfc_id.upper()
         logging.debug(f"Read NFC tag with RFID: {rfid}")
         try:
             user_info = api_caller.get_user_by_rfid(rfid)
