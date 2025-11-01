@@ -114,5 +114,7 @@ def run(axis):
     grbl_port = find_and_connect_to_grbl(axis)
     if grbl_port:
         print("Connection successful!")
+        return True
     else:
         print("Make sure the GRBL device is connected and powered on.")
+        return "GRBL Error"

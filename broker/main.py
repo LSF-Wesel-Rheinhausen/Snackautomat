@@ -30,7 +30,7 @@ def get_valid_f_products():
     return vf_data.get_valid_fu_products()
 
 
-@app.route('/test', methods=['POST'])
+@app.route('/test', methods=['GET'])
 @jwt_required()
 def test():
     return "Hello World"

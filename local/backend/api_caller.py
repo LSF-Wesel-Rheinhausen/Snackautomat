@@ -62,3 +62,18 @@ def set_new_sale(memberid: str, itemid: str, amount: int) -> dict:
     response = requests.post(f"{os.environ.get('backendip')}/Buy", json={"memberid": memberid, "itemid": itemid, "amount": amount}, headers=headers, verify=not ignore_self_signed_cert)
     response.raise_for_status()
     return response.json()
+
+
+def test_connection():
+            payload = {
+                "sub": "test_connection",
+                "name": "Frontend",
+                "iat": datetime.datetime.utcnow()
+            }
+            headers = {"Authorization": f"Bearer {get_jwt_token(payload)}"}
+            response = requests.get(f"{os.environ.get('backendip')}/test", headers=headers, verify=False)
+            response.raise_for_status()
+            if response.text == "Hello World":
+                return True
+            else:
+                return False
