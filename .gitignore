@@ -162,3 +162,11 @@ cython_debug/
 shop_items_cache.json
 token.json
 *.pem
+
+# Frontend (Vue / Vite)
+local/frontend/node_modules/
+local/frontend/dist/
+local/frontend/.vite/
+local/frontend/.env
+local/frontend/.env.*
+local/frontend/.DS_Store
