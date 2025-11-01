@@ -46,7 +46,7 @@ def get_products():
 
 @app.route('/get_User_Info', methods=['GET'])
 def login():
-    nfc_id = read_nfc.read_once()
+    nfc_id = read_nfc.read_uid()
     if nfc_id:
         rfid = jsonify(nfc_id).get_json()
         try:
