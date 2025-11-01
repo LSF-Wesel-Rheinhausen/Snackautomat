@@ -43,6 +43,7 @@ Wichtige Anforderungen an das UI
    - Snack‑Kauf: Startbildschirm → NFC-Login → Produktauswahl → Ausgabe+Buchung → Bestätigung der Ausgabe auf dem Display und Danke für die Nutzung der Packstation
    - Admin‑Modus: PIN‑eingabe (nur verfügbar für Spezielle NutzerIDs) → Admin‑Dashboard (Slot‑Test, Sync, OTA, Sperren)
    - Home Assistant: Status, Temperatur, Türzustand, Sperrschalter (anzeigen/aktualisieren)
+   - Netzwerk-Einstellungen: Im Admin Modus sollten die Netzwerkeinstellungen geändert werden können und ein anderes Wifi verbunden werden können
 
 2. Barrierefreiheit & UX
    - Touchoptimiertes Layout, große Buttons, hoher Kontrast
