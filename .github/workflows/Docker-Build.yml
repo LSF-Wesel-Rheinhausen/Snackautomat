@@ -16,6 +16,9 @@ jobs:
     - name: Go to Project Directory
       run: cd ./broker
 
+    - name: List Files
+      run: ls
+
     - name: Build Docker image
       run: |
        echo ${{ secrets.SUDO }} | sudo -S docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest .
