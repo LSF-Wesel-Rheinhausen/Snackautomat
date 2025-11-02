@@ -1,11 +1,9 @@
-
-
-from flask import Flask, render_template, request, redirect, url_for, make_response
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_httpauth import HTTPBasicAuth
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+import tempfile
+from flask import Flask, request
+from flask_jwt_extended import JWTManager, jwt_required
 from flask_talisman import Talisman
 import logging
+from werkzeug.serving import make_ssl_devcert
 import vf_data
 import os
 app = Flask(__name__, static_url_path='/static')
@@ -72,7 +70,40 @@ def get_product():
             return product_details
         return "False"
 
+def ensure_ssl_certificates(cert_filename='cert.pem', key_filename='key.pem'):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    cert_path = os.path.join(base_dir, cert_filename)
+    key_path = os.path.join(base_dir, key_filename)
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        return cert_path, key_path
+    for stale_file in (cert_path, key_path):
+        if os.path.exists(stale_file):
+            os.remove(stale_file)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        temp_base = os.path.join(tmp_dir, 'devcert')
+        try:
+            generated_cert, generated_key = make_ssl_devcert(temp_base)
+        except TypeError as exc:
+            logging.warning(
+                "Unable to generate SSL certificates automatically: %s. "
+                "Install the 'cryptography' package to enable auto-generation.",
+                exc,
+            )
+            return None, None
+        os.replace(generated_cert, cert_path)
+        os.replace(generated_key, key_path)
+    logging.debug("Generated new self-signed SSL certificate at %s and key at %s", cert_path, key_path)
+    return cert_path, key_path
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=('cert.pem', 'key.pem'))
+    try:
+        app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=('cert.pem', 'key.pem'))
+    except Exception as e:
+        logging.error(f"Error starting server with SSL: {e}")
+        cert_path, key_path = ensure_ssl_certificates()
+        app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=(cert_path, key_path))
+
+
+
