@@ -6,4 +6,4 @@ python-dotenv
 Werkzeug
 PyJWT
 flask_jwt_extended
-werkzeug.serving
+werkzeug
