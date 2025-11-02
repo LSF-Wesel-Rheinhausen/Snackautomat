@@ -49,6 +49,7 @@ const FALLBACK_ITEMS: SnackItem[] = [
 
 export const useItemsStore = defineStore('items', () => {
   const api = useApi();
+  const logger = console;
   const items = ref<SnackItem[]>([]);
   const lastUpdated = ref<string | null>(null);
 
@@ -121,28 +122,62 @@ export const useItemsStore = defineStore('items', () => {
       return;
     }
     try {
+      logger.groupCollapsed("[ItemsStore] fetchItems");
+      logger.log("force", force);
       const { data } = await api.get<unknown>(API_ENDPOINTS.productList);
+      logger.log("payload", data);
 
       let normalized: SnackItem[] = [];
       if (Array.isArray(data)) {
         normalized = data
-          .map((entry) => normalizeProduct(entry))
+          .map((entry, index) => {
+            const normalizedEntry = normalizeProduct(entry);
+            if (!normalizedEntry) {
+              logger.warn(`[ItemsStore] Invalid product entry at index ${index}`, entry);
+            }
+            return normalizedEntry;
+          })
           .filter((entry): entry is SnackItem => Boolean(entry));
       } else if (data && typeof data === 'object') {
-        if (Array.isArray((data as any).results)) {
-          normalized = (data as any).results
-            .map((entry: any) => normalizeProduct(entry))
-            .filter((entry: SnackItem | null): entry is SnackItem => Boolean(entry));
-        } else {
-          normalized = Object.values(data as Record<string, unknown>)
-            .map((entry) => normalizeProduct(entry))
-            .filter((entry): entry is SnackItem => Boolean(entry));
+        const records: unknown[] = [];
+        const seenArrays = new Set<unknown>();
+
+        const maybeArrayProps = ['results', 'items', 'products'];
+        maybeArrayProps.forEach((key) => {
+          const value = (data as Record<string, unknown>)[key];
+          if (Array.isArray(value) && !seenArrays.has(value)) {
+            records.push(...value);
+            seenArrays.add(value);
+          }
+        });
+
+        if (!records.length) {
+          Object.values(data as Record<string, unknown>).forEach((value) => {
+            if (Array.isArray(value) && !seenArrays.has(value)) {
+              records.push(...value);
+              seenArrays.add(value);
+            } else {
+              records.push(value);
+            }
+          });
         }
+
+        normalized = records
+          .map((entry, index) => {
+            const normalizedEntry = normalizeProduct(entry);
+            if (!normalizedEntry) {
+              logger.warn(`[ItemsStore] Invalid product record ${index}`, entry);
+            }
+            return normalizedEntry;
+          })
+          .filter((entry): entry is SnackItem => Boolean(entry));
       }
 
       if (!normalized.length) {
         items.value = [];
         lastUpdated.value = new Date().toISOString();
+        logger.warn('[ItemsStore] No products returned from API.');
+        logger.groupEnd();
         return;
       }
 
@@ -150,9 +185,9 @@ export const useItemsStore = defineStore('items', () => {
     } catch (error) {
       items.value = [];
       lastUpdated.value = new Date().toISOString();
-      if (error instanceof ApiError) {
-        console.warn('Katalog konnte nicht geladen werden', error);
-      }
+      logger.error('[ItemsStore] Failed to fetch products', error);
+    } finally {
+      logger.groupEnd();
     }
   }
 
