@@ -5,7 +5,6 @@ LABEL version="1.0.0"
 LABEL maintainer="Jan Sellerbeck, Robin Busch"
 LABEL name="Vereinsflieger/Snack Broker"
 RUN apk add --no-cache procps
-ENTRYPOINT ["top", "-b"]
 COPY . /broker
 WORKDIR /broker
 #RUN apt-get update && apt-get install -y python3 python3-pip
