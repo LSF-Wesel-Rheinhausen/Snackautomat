@@ -7,7 +7,7 @@ LABEL name="Vereinsflieger/Snack Broker"
 ENTRYPOINT ["top", "-b"]
 COPY . /broker
 WORKDIR /broker
-RUN apt-get update && apt-get install -y python3 python3-pip
+#RUN apt-get update && apt-get install -y python3 python3-pip
 RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8123
 CMD ["python3", "broker/main.py"]
