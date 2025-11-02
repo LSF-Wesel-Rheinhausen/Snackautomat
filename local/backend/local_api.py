@@ -12,7 +12,7 @@ CORS(app)
 from dotenv import load_dotenv
 load_dotenv()
 
-@app.route('/Buy', methods=['POST'])
+@app.route('/buy', methods=['POST'])
 def run_worker():
     data = flask.request.get_json()
     row = data.get('row')
@@ -36,7 +36,7 @@ def run_worker():
         print(f"Unknown Error processing {row}: {e}")
         return {"error": str(e)}, 500
 
-@app.route('/get_Product_List', methods=['GET'])
+@app.route('/get_product_list', methods=['GET'])
 def get_products():
     try:
         products = api_caller.get_valid_products()
@@ -142,7 +142,7 @@ def api_wifi_connect():
         "hidden": hidden
     }), 201
 
-@app.route("/OTA", methods=['GET'])
+@app.route("/ota", methods=['GET'])
 def ota_update():
     try:
         #TODO: Implement OTA update logic

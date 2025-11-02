@@ -13,6 +13,9 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Go to Project Directory
+      run: cd ./broker
+
     - name: Build Docker image
       run: |
        echo ${{ secrets.SUDO }} | sudo -S docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest .
