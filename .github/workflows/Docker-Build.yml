@@ -48,8 +48,8 @@ jobs:
           HOST_PORT: "8124"
 
           # Zielpfade im Container (ABSOLUT)
-          CONTAINER_ENV_PATH: "/broker/.env"
-          CONTAINER_TOKEN_PATH: "/broker/token.json"
+          CONTAINER_ENV_PATH: /broker/.env
+          CONTAINER_TOKEN_PATH: /broker/token.json
         run: |
           set -euo pipefail
           command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
@@ -129,7 +129,7 @@ jobs:
               "ExposedPorts": { ($cport + "/tcp"): {} },
               "HostConfig": {
                 "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
-                "Binds": [ $tok_bind ],
+                "Binds": ["/home/runner/token.json:/broker/broker/token.json:ro"],
                 "RestartPolicy": { "Name": "unless-stopped" }
               }
             }')
