@@ -34,50 +34,32 @@ jobs:
             IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
             API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
             CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
-            CONFIG_PATH: ${{ secrets.CONFIG_PATH }}   # absoluter Host-Pfad!
-            CONTAINER_PORT: "8123"                    # anpassen: echter Port IN deinem Container
-            HOST_PORT: "8123"                         # anpassen: gewünschter Port auf dem Host
+            CONFIG_PATH: ${{ secrets.CONFIG_PATH }}      # absoluter Pfad zur .env auf dem Zielhost
+            CONTAINER_PORT: "8123"                       # Port IM Container
+            HOST_PORT: "8123"                            # Port auf dem Host
+            CONTAINER_ENV_PATH: "/app/.env"              # Zielpfad IM Container
           run: |
             set -euo pipefail
             command -v jq >/dev/null || sudo apt-get update && sudo apt-get install -y jq
 
-            # 1) Host-Pfad validieren
-            if [ -z "${CONFIG_PATH:-}" ]; then
-              echo "CONFIG_PATH secret ist leer"; exit 1
-            fi
-            if [ ! -e "$CONFIG_PATH" ]; then
-              echo "CONFIG_PATH existiert nicht auf dem Zielhost: $CONFIG_PATH"; exit 1
+            # Existenz der .env-Datei auf dem Zielhost prüfen (sonst scheitert Docker mit 400)
+            if [ ! -f "$CONFIG_PATH" ]; then
+              echo "Fehler: CONFIG_PATH zeigt nicht auf eine Datei: $CONFIG_PATH"; exit 1
             fi
 
-            # 2) Bind je nach Typ (Datei vs. Ordner) korrekt setzen
-            if [ -d "$CONFIG_PATH" ]; then
-              BIND_TARGET="/config:ro"
-              BIND_SRC="$CONFIG_PATH"
-            else
-              # Datei -> Datei-Mount; Datei MUSS existieren
-              BIND_TARGET="/config/config.yaml:ro"
-              BIND_SRC="$CONFIG_PATH"
-            fi
-            BIND_SPEC="${BIND_SRC}:${BIND_TARGET}"
-
-            # 3) Alten Container (falls vorhanden) idempotent entfernen
+            # Alten Container entfernen (idempotent)
             OLD_ID=$(curl --insecure -sS -H "X-API-Key: $API_KEY" \
               "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/json?all=1" \
               | jq -r ".[] | select(.Names[]? == \"/$CONTAINER_NAME\") | .Id // empty")
-
             if [ -n "${OLD_ID:-}" ]; then
-              curl --insecure -sS -X POST \
-                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" \
-                -H "X-API-Key: $API_KEY" || true
-              curl --fail --insecure -sS -X DELETE \
-                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" \
-                -H "X-API-Key: $API_KEY"
+              curl --insecure -sS -X POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" -H "X-API-Key: $API_KEY" || true
+              curl --fail --insecure -sS -X DELETE "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" -H "X-API-Key: $API_KEY"
             fi
 
-            # 4) Create-Payload bauen
+            # Create-Payload: .env-Datei readonly nach /app/.env mounten
             CREATE_PAYLOAD=$(jq -n \
               --arg img "$IMAGE" \
-              --arg bind "$BIND_SPEC" \
+              --arg bind "${CONFIG_PATH}:${CONTAINER_ENV_PATH}:ro" \
               --arg cport "$CONTAINER_PORT" \
               --arg hport "$HOST_PORT" \
               '{
@@ -89,29 +71,15 @@ jobs:
                 }
               }')
 
-            echo "Create-Payload:"
-            echo "$CREATE_PAYLOAD" | jq .
-
-            # 5) Container erstellen, HTTP-Code und Body getrennt loggen
-            HTTP_CODE=$(mktemp)
-            CREATE_RESP=$(curl --insecure -sS -X POST \
+            RESP=$(curl --fail --insecure -sS -X POST \
               "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
               -H "X-API-Key: $API_KEY" \
               -H "Content-Type: application/json" \
-              -d "$CREATE_PAYLOAD" \
-              -w "%{http_code}" -o >(cat) )
-            echo "$CREATE_RESP" | tail -n1 > "$HTTP_CODE"
+              -d "$CREATE_PAYLOAD")
 
-            if [ "$(cat "$HTTP_CODE")" != "201" ]; then
-              echo; echo "Create-Fehler (HTTP $(cat "$HTTP_CODE")):"
-              echo "$CREATE_RESP"
-              exit 1
-            fi
+            CID=$(echo "$RESP" | jq -r '.Id')
+            test -n "$CID"
 
-            CID=$(echo "$CREATE_RESP" | head -n-1 | jq -r '.Id')
-            test -n "$CID" || { echo "Keine Container-ID erhalten"; exit 1; }
-
-            # 6) Start
             curl --fail --insecure -sS -X POST \
               "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start" \
               -H "X-API-Key: $API_KEY"
