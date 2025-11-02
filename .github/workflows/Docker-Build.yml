@@ -136,7 +136,8 @@ jobs:
           [ -n "$CID" ] || { echo "Fehler: Keine Container-ID im Create-Response"; echo "$RESP"; exit 1; }
           # Start: ohne Body (Portainer→Docker Engine)
           start_resp=$(curl --insecure -s -S -w "\n%{http_code}" -X POST \
-            -H "X-API-Key: $API_KEY" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
             "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start")
           start_code="$(printf "%s" "$start_resp" | tail -n1)"
           if [ "$start_code" -ge 400 ]; then
