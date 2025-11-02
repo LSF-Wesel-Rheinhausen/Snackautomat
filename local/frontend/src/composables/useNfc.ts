@@ -8,8 +8,7 @@ import { useSessionStore } from '@/stores/session';
 import { useApi, ApiError } from './useApi';
 import type { NfcUser } from '@/types/models';
 import { useToast } from 'primevue/usetoast';
-
-const USER_INFO_ENDPOINT = '/get_user_info';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface UserInfoErrorPayload {
   error?: string;
@@ -69,7 +68,7 @@ export function useNfc() {
 
   async function requestUserInfo(): Promise<boolean> {
     try {
-      const { data } = await get<Record<string, unknown>>(USER_INFO_ENDPOINT);
+      const { data } = await get<Record<string, unknown>>(API_ENDPOINTS.userInfo);
       const normalized = normalizeUser(data);
       sessionStore.startSession(normalized);
       lastTokenId.value = normalized.memberId ?? normalized.id;

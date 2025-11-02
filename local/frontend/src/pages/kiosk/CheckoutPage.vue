@@ -81,6 +81,7 @@ import Message from 'primevue/message';
 import { useToast } from 'primevue/usetoast';
 import { useSessionStore } from '@/stores/session';
 import { useApi } from '@/composables/useApi';
+import { API_ENDPOINTS } from '@/config/api';
 import type { PurchaseReceipt } from '@/types/models';
 
 const router = useRouter();
@@ -150,7 +151,7 @@ async function checkout() {
       }
 
       for (let count = 0; count < item.quantity; count += 1) {
-        await post<{ message: string }>('/Buy', {
+        await post<{ message: string }>(API_ENDPOINTS.buy, {
           row,
           memberid: memberId
         });

@@ -33,7 +33,6 @@
 import Button from 'primevue/button';
 import HomeStatusPanel from '@/components/HomeStatusPanel.vue';
 import { useRouter } from 'vue-router';
-import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSessionStore } from '@/stores/session';
 

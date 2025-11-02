@@ -11,6 +11,7 @@ import type {
   SlotTestResult
 } from '@/types/models';
 import { useApi, ApiError } from '@/composables/useApi';
+import { API_ENDPOINTS, API_BUILDERS } from '@/config/api';
 
 interface AuthResponse {
   profile: AdminProfile;
@@ -61,7 +62,7 @@ export const useAdminStore = defineStore('admin', () => {
 
     try {
       // Backend validates the PIN and issues a short-lived token for subsequent requests.
-      const { data } = await api.post<AuthResponse>('/admin/auth/pin', { pin });
+      const { data } = await api.post<AuthResponse>(API_ENDPOINTS.adminAuthPin, { pin });
       setAuthPayload(data);
       await fetchStatus();
       return data;
@@ -78,7 +79,7 @@ export const useAdminStore = defineStore('admin', () => {
 
   async function logout() {
     try {
-      await api.post<LogoutResponse>('/admin/logout');
+      await api.post<LogoutResponse>(API_ENDPOINTS.adminLogout);
     } catch (error) {
       console.warn('Logout fehlgeschlagen', error);
     } finally {
@@ -93,7 +94,7 @@ export const useAdminStore = defineStore('admin', () => {
       return;
     }
     try {
-      const { data } = await api.get<MachineStatusResponse>('/admin/status');
+      const { data } = await api.get<MachineStatusResponse>(API_ENDPOINTS.adminStatus);
       status.value = data;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -107,7 +108,7 @@ export const useAdminStore = defineStore('admin', () => {
     busyAction.value = `slot:${slot}`;
     try {
       // Slot test instructs backend to rotate/dispense hardware for diagnostics.
-      const { data } = await api.post<SlotTestResult>(`/admin/slots/${slot}/test`);
+      const { data } = await api.post<SlotTestResult>(API_BUILDERS.adminSlotTest(slot));
       await fetchStatus();
       return data;
     } finally {
@@ -120,7 +121,7 @@ export const useAdminStore = defineStore('admin', () => {
     busyAction.value = 'sync';
     try {
       // Asks backend to push pending bookings to Vereinsflieger.
-      await api.post('/admin/sync');
+      await api.post(API_ENDPOINTS.adminSync);
       await fetchStatus();
     } finally {
       busyAction.value = null;
@@ -131,7 +132,7 @@ export const useAdminStore = defineStore('admin', () => {
     busyAction.value = 'ota';
     try {
       // Triggers the backend OTA mechanism (Raspberry Pi service).
-      await api.post('/admin/ota/start');
+      await api.post(API_ENDPOINTS.adminOtaStart);
       await fetchStatus();
     } finally {
       busyAction.value = null;
@@ -142,7 +143,7 @@ export const useAdminStore = defineStore('admin', () => {
     busyAction.value = 'network';
     try {
       // Delegates Wi-Fi reconfiguration to backend, which updates wpa_supplicant etc.
-      await api.post('/admin/network', payload);
+      await api.post(API_ENDPOINTS.adminNetwork, payload);
       await fetchStatus();
     } finally {
       busyAction.value = null;

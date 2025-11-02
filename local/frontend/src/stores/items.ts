@@ -7,6 +7,7 @@ import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import type { SnackItem } from '@/types/models';
 import { useApi, ApiError } from '@/composables/useApi';
+import { API_ENDPOINTS } from '@/config/api';
 
 // Local mock data used when backend catalog is unreachable during maintenance.
 const FALLBACK_ITEMS: SnackItem[] = [
@@ -120,7 +121,7 @@ export const useItemsStore = defineStore('items', () => {
       return;
     }
     try {
-      const { data } = await api.get<unknown>('/get_Product_List');
+      const { data } = await api.get<unknown>(API_ENDPOINTS.productList);
 
       let normalized: SnackItem[] = [];
       if (Array.isArray(data)) {

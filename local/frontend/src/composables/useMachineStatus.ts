@@ -5,6 +5,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useApi, ApiError } from './useApi';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface HealthResponse {
   status: string;
@@ -23,7 +24,7 @@ export function useMachineStatus(fetchOnMount = true) {
 
   async function fetchHealth() {
     try {
-      const { data } = await get<HealthResponse>('/health');
+      const { data } = await get<HealthResponse>(API_ENDPOINTS.health);
       healthy.value = data.status?.toLowerCase() === 'ok';
       statusMessage.value = data.message ?? (healthy.value ? 'Broker verbunden' : 'Unbekannter Zustand');
     } catch (err) {
