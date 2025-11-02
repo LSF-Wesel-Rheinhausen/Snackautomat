@@ -161,4 +161,5 @@ cython_debug/
 .idea/
 shop_items_cache.json
 token.json
-*.pem
+cert.pem
+key.pem
