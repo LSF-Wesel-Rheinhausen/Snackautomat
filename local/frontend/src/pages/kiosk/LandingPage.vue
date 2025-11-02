@@ -124,6 +124,7 @@ function goToCatalog() {
   background: color-mix(in srgb, var(--surface-card) 95%, transparent);
   border-radius: 28px;
   padding: 1.4rem;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 20px 40px -36px rgba(16, 24, 40, 0.5);
 }
 

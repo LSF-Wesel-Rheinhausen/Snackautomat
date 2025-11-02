@@ -3,7 +3,7 @@
     <template #title>
       <div class="title-row">
         <div class="titles">
-          <span v-if="primaryLabel" class="designation">{{ primaryLabel }}</span>
+          <span class="designation">{{ primaryLabel }}</span>
           <span v-if="secondaryLabel" class="name">{{ secondaryLabel }}</span>
         </div>
         <Tag v-if="showStock && stockLabel !== null" :value="stockLabel" :severity="stockSeverity" rounded />
@@ -62,7 +62,10 @@ const nameLabel = computed(() => {
   return raw.length > 0 ? raw : null;
 });
 
-const primaryLabel = computed(() => designationLabel.value ?? nameLabel.value ?? null);
+const primaryLabel = computed(() => {
+  const label = designationLabel.value ?? nameLabel.value ?? props.item.id?.toString() ?? '';
+  return label;
+});
 const secondaryLabel = computed(() => {
   if (!designationLabel.value || !nameLabel.value) {
     return null;
@@ -100,6 +103,7 @@ const priceLabel = computed(() => {
   overflow: hidden;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
   background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  border: 1px solid var(--surface-border);
 }
 
 .snack-card:hover {
@@ -129,6 +133,7 @@ const priceLabel = computed(() => {
   font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.2;
+  color: var(--text-color);
 }
 
 .name {
@@ -145,6 +150,7 @@ const priceLabel = computed(() => {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
+  color: var(--text-color);
 }
 
 .allergens {

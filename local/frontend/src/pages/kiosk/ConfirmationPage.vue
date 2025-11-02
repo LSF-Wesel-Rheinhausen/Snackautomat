@@ -78,6 +78,7 @@ function startNew() {
   background: color-mix(in srgb, var(--surface-card) 95%, transparent);
   padding: 2.5rem 3rem;
   border-radius: 32px;
+  border: 1px solid var(--surface-border);
   text-align: center;
   box-shadow: 0 36px 72px -40px rgba(16, 24, 40, 0.6);
   display: grid;
@@ -96,6 +97,7 @@ function startNew() {
   padding: 1.5rem;
   display: grid;
   gap: 0.75rem;
+  border: 1px solid var(--surface-border);
 }
 
 .receipt ul {
@@ -115,7 +117,7 @@ function startNew() {
 .total-row {
   font-weight: 700;
   font-size: 1.2rem;
-  border-top: 1px solid color-mix(in srgb, var(--text-color) 10%, transparent);
+  border-top: 1px solid var(--surface-border);
   padding-top: 0.75rem;
 }
 

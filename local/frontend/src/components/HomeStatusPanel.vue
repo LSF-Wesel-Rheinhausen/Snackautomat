@@ -59,6 +59,7 @@ const lastCheckDisplay = computed(() => {
   border-radius: 18px;
   padding: 0.75rem 1rem;
   gap: 0.75rem;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 18px 36px -24px rgba(16, 24, 40, 0.45);
 }
 

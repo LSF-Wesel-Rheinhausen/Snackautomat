@@ -70,6 +70,7 @@ function goToAdmin() {
   background: color-mix(in srgb, var(--surface-card) 92%, transparent);
   padding: 0.85rem 1rem;
   border-radius: 20px;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 1.5rem 3rem -2.5rem rgba(16, 24, 40, 0.5);
 }
 
@@ -98,8 +99,9 @@ function goToAdmin() {
   background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-card));
   padding: 0.85rem 1rem;
   border-radius: 20px;
-  color: var(--surface-0);
+  color: var(--text-color);
   min-height: 90px;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 1.5rem 3rem -2.5rem rgba(64, 120, 255, 0.5);
 }
 
@@ -110,7 +112,7 @@ function goToAdmin() {
 
 .user-balance {
   font-size: 1rem;
-  color: var(--surface-100);
+  color: var(--text-color-secondary);
 }
 
 .kiosk-content {
@@ -142,6 +144,7 @@ function goToAdmin() {
   background: color-mix(in srgb, var(--surface-card) 94%, transparent);
   border-radius: 18px;
   padding: 0.85rem 1.25rem;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 1.5rem 3rem -2.5rem rgba(16, 24, 40, 0.45);
 }
 

@@ -102,6 +102,7 @@ async function simulate() {
   max-width: 520px;
   display: grid;
   gap: 1.25rem;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 26px 52px -36px rgba(16, 24, 40, 0.55);
 }
 

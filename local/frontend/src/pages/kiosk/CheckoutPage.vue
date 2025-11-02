@@ -205,6 +205,7 @@ function goToCatalog() {
   background: color-mix(in srgb, var(--surface-card) 94%, transparent);
   border-radius: 24px;
   padding: 1.6rem;
+  border: 1px solid var(--surface-border);
   box-shadow: 0 24px 48px -32px rgba(16, 24, 40, 0.5);
 }
 
@@ -221,6 +222,7 @@ function goToCatalog() {
   padding: 1rem;
   border-radius: 18px;
   background: color-mix(in srgb, var(--surface-card) 96%, transparent);
+  border: 1px solid var(--surface-border);
 }
 
 .cart-item h3 {
