@@ -27,44 +27,69 @@ jobs:
       runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
       needs: build
       steps:
-      - name: Deploy to Portainer
-        run: |
-          curl --insecure -X POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/${{ secrets.CONTAINER_NAME }}/stop" \
-           -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-          curl --insecure -X DELETE "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/${{ secrets.CONTAINER_NAME }}" \
-           -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-          curl --insecure -X DELETE "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \
-           -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-              - name: Pull Image on Portainer (authenticated)
-      env:
-        PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
-        ENDPOINT_ID: "2"
-        IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
-        USER: ${{ secrets.DOCKER_USERNAME }}
-        PASS: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          set -euo pipefail
-  
-          # X-Registry-Auth Payload (Docker Remote API Spec)
-          AUTH_PAYLOAD=$(printf '{"username":"%s","password":"%s","serveraddress":"https://index.docker.io/v1/"}' "$USER" "$PASS" | base64 -w0)
-  
-          curl --fail --insecure -X POST \
-            "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/images/create?fromImage=$IMAGE" \
-            -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" \
-            -H "X-Registry-Auth: $AUTH_PAYLOAD"
-          response=$(curl --insecure -X  POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/create?name=${{ secrets.CONTAINER_NAME }}" \
-               -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" \
-               -H "Content-Type: application/json" \
-               -d '{
-                     "Image": "${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest",
-                     "HostConfig": {
-                       "PortBindings": { "8124/tcp": [{ "HostPort": "8123" }] } ,
-                       "Binds": ["${{ secrets.CONFIG_PATH }}:/config/config.yaml"],
-                       "RestartPolicy": { "Name": "unless-stopped" }
-                     }
-                   }')
-          container_id=$(echo $response | grep -o '"Id":"[^"]*' | grep -o '[^"]*$')
-          api_token=${{ secrets.PORTAINER_API_TOKEN }}
-          curl --insecure -X  POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/1/docker/containers/${container_id}/start" \
-            -H "X-API-Key: ${api_token}"
-          
+        - name: Deploy via Portainer API (auth pull + recreate)
+          env:
+            PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
+            ENDPOINT_ID: "2" # <— einheitlich
+            IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+            USER: ${{ secrets.DOCKER_USERNAME }}
+            PASS: ${{ secrets.DOCKER_PASSWORD }}
+            CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+            API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
+            CONFIG_PATH: ${{ secrets.CONFIG_PATH }}
+          run: |
+            set -euo pipefail
+            
+            # Tools sicherstellen
+            command -v jq >/dev/null || sudo apt-get update && sudo apt-get install -y jq
+            
+            # X-Registry-Auth (Docker Remote API): Base64(JSON) ohne Zeilenumbruch
+            AUTH_JSON=$(printf '{"username":"%s","password":"%s","serveraddress":"https://index.docker.io/v1/"}' "$USER" "$PASS")
+            AUTH=$(printf '%s' "$AUTH_JSON" | base64 -w 0)
+            
+            # Authentifiziertes Pull des Images
+            curl --fail --insecure -sS -X POST \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/images/create?fromImage=$IMAGE" \
+              -H "X-API-Key: $API_KEY" \
+              -H "X-Registry-Auth: $AUTH"
+            
+            # ggf. alten Container ermitteln und entfernen (idempotent)
+            OLD_ID=$(curl --insecure -sS -H "X-API-Key: $API_KEY" \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/json?all=1" \
+              | jq -r ".[] | select(.Names[]? == \"/$CONTAINER_NAME\") | .Id // empty")
+            
+            if [ -n "${OLD_ID:-}" ]; then
+              curl --insecure -sS -X POST \
+                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" \
+                -H "X-API-Key: $API_KEY" || true
+              curl --fail --insecure -sS -X DELETE \
+                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" \
+                -H "X-API-Key: $API_KEY"
+            fi
+            
+            # Container erstellen (Ports/Binds anpassen)
+            CREATE_PAYLOAD=$(jq -n \
+              --arg img "$IMAGE" \
+              --arg cfg "$CONFIG_PATH" \
+              '{
+                "Image": $img,
+                "HostConfig": {
+                  "PortBindings": { "8123/tcp": [ { "HostPort": "8123" } ] },
+                  "Binds": [ ($cfg + ":/config/config.yaml:ro") ],
+                  "RestartPolicy": { "Name": "unless-stopped" }
+                }
+              }')
+            
+            CREATE_RESP=$(curl --fail --insecure -sS -X POST \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
+              -H "X-API-Key: $API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$CREATE_PAYLOAD")
+            
+            CID=$(echo "$CREATE_RESP" | jq -r '.Id')
+            test -n "$CID"
+            
+            # Start
+            curl --fail --insecure -sS -X POST \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start" \
+              -H "X-API-Key: $API_KEY"
