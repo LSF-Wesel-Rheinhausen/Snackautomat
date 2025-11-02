@@ -18,7 +18,7 @@
       <i class="pi pi-clock" aria-hidden="true"></i>
       <div>
         <span class="label">Letzte Prüfung</span>
-        <span class="value">{{ lastCheckDisplay }}</span>
+        <span class="value">{{ lastCheckDisplay }} Uhr</span>
       </div>
     </div>
   </section>
@@ -41,7 +41,7 @@ const lastCheckDisplay = computed(() => {
   if (Number.isNaN(date.getTime())) {
     return '–';
   }
-  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 });
 </script>
 
