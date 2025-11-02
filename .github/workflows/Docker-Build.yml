@@ -35,8 +35,23 @@ jobs:
            -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
           curl --insecure -X DELETE "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \
            -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-          curl --insecure -X POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/create?fromImage=${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \
-           -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
+              - name: Pull Image on Portainer (authenticated)
+      env:
+        PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
+        ENDPOINT_ID: "2"
+        IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+        USER: ${{ secrets.DOCKER_USERNAME }}
+        PASS: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          set -euo pipefail
+  
+          # X-Registry-Auth Payload (Docker Remote API Spec)
+          AUTH_PAYLOAD=$(printf '{"username":"%s","password":"%s","serveraddress":"https://index.docker.io/v1/"}' "$USER" "$PASS" | base64 -w0)
+  
+          curl --fail --insecure -X POST \
+            "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/images/create?fromImage=$IMAGE" \
+            -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" \
+            -H "X-Registry-Auth: $AUTH_PAYLOAD"
           response=$(curl --insecure -X  POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/create?name=${{ secrets.CONTAINER_NAME }}" \
                -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" \
                -H "Content-Type: application/json" \
