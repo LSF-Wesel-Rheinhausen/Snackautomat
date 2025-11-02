@@ -37,7 +37,7 @@ jobs:
             CONFIG_PATH: ${{ secrets.CONFIG_PATH }}      # absoluter Pfad zur .env auf dem Zielhost
             CONTAINER_PORT: "8124"                       # Port IM Container
             HOST_PORT: "8124"                            # Port auf dem Host
-            CONTAINER_ENV_PATH: "/app/.env"              # Zielpfad IM Container
+            CONTAINER_ENV_PATH: ".env"              # Zielpfad IM Container
           run: |
             set -euo pipefail
             command -v jq >/dev/null || sudo apt-get update && sudo apt-get install -y jq
@@ -65,7 +65,7 @@ jobs:
               '{
                 "Image": $img,
                 "HostConfig": {
-                  "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
+                  "PortBindings": { (8124): [ { "HostPort": 8124} ] },
                   "Binds": [ $bind ],
                   "RestartPolicy": { "Name": "unless-stopped" }
                 }
