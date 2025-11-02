@@ -13,8 +13,8 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
-    - name: Go to Project Directory
-      run: cd broker
+    #- name: Go to Project Directory
+     # run: cd broker/broker
 
     - name: List Files
       run: ls
