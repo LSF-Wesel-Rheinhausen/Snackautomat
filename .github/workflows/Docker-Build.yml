@@ -108,23 +108,32 @@ jobs:
             curl_dbg DELETE "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1"
           fi
           
-          # 3) Create-Payload (.env + token.json read-only binden, Ports korrekt)
+          # /home/runner/env_prod -> ENV Array für Docker
+          ENV_ARR=$(jq -Rs '
+            split("\n")
+            | map(select(test("^\\s*$|^\\s*#")|not))        # leere Zeilen & Kommentare entfernen
+            | map(gsub("^\\s+|\\s+$";""))                   # Whitespace trimmen
+            | map(select(test("^[A-Za-z_][A-Za-z0-9_]*="))) # nur KEY=VALUE Zeilen behalten
+          ' < "$CONFIG_PATH")
+          
+          # Container erstellen mit ENV + token.json
           CREATE_PAYLOAD=$(jq -n \
             --arg img "$IMAGE" \
-            --arg env_bind "${CONFIG_PATH}:${CONTAINER_ENV_PATH}:ro" \
             --arg tok_bind "${TOKEN_PATH}:${CONTAINER_TOKEN_PATH}:ro" \
             --arg cport "$CONTAINER_PORT" \
             --arg hport "$HOST_PORT" \
+            --argjson env "$ENV_ARR" \
             '{
               "Image": $img,
+              "Env": $env,
               "ExposedPorts": { ($cport + "/tcp"): {} },
               "HostConfig": {
                 "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
-                "Binds": [ $env_bind, $tok_bind ],
+                "Binds": [ $tok_bind ],
                 "RestartPolicy": { "Name": "unless-stopped" }
               }
             }')
-          
+                    
           echo "Erzeuge Container $CONTAINER_NAME …"
           RESP=$(curl --fail --insecure -sS -X POST \
             "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
