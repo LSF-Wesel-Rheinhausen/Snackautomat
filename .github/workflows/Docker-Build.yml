@@ -49,7 +49,7 @@ jobs:
 
           # Zielpfade im Container (ABSOLUT)
           CONTAINER_ENV_PATH: "/broker/.env"
-          CONTAINER_TOKEN_PATH: "/broker/broker/token.json"
+          CONTAINER_TOKEN_PATH: "/broker/token.json"
         run: |
           set -euo pipefail
           command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
