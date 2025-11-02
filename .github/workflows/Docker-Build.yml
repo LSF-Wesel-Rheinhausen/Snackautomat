@@ -25,6 +25,7 @@ jobs:
          echo ${{ secrets.SUDO }} | sudo docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
   deploy:
       runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
+      needs: build
       steps:
       - name: Deploy to Portainer
         run: |
