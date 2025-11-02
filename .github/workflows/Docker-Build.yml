@@ -65,7 +65,7 @@ jobs:
               '{
                 "Image": $img,
                 "HostConfig": {
-                  "PortBindings": { (8124): [ { "HostPort": 8124} ] },
+                  "PortBindings": {8124:8124},
                   "Binds": [ $bind ],
                   "RestartPolicy": { "Name": "unless-stopped" }
                 }
