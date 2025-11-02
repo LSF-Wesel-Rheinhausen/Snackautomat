@@ -7,7 +7,7 @@
       <h2>NFC Karte scannen</h2>
       <p>{{ message }}</p>
       <div class="spinner">
-        <ProgressSpinner style="width: 5rem; height: 5rem" strokeWidth="6" />
+        <ProgressSpinner style="width: 4rem; height: 4rem" strokeWidth="5" />
       </div>
       <p class="hint">
         Halten Sie die Karte ruhig an das Lesegerät. Nach dem Scan können Sie sofort einkaufen.
@@ -55,7 +55,7 @@ const showDemoButton = import.meta.env.DEV;
 
 onMounted(async () => {
   // Begin listening for NFC events immediately and warm up catalog data.
-  nfc.start();
+  await nfc.start();
   await itemsStore.fetchItems();
 });
 
@@ -80,9 +80,9 @@ function cancel() {
   router.push({ name: 'kiosk-landing' });
 }
 
-function simulate() {
+async function simulate() {
   // Development helper to test flow without actual hardware.
-  nfc.simulateScan();
+  await nfc.simulateScan();
 }
 </script>
 
@@ -97,17 +97,17 @@ function simulate() {
 .scan-card {
   text-align: center;
   background: color-mix(in srgb, var(--surface-card) 96%, transparent);
-  padding: 2.5rem 3rem;
-  border-radius: 32px;
-  max-width: 540px;
+  padding: 2rem 2.4rem;
+  border-radius: 28px;
+  max-width: 520px;
   display: grid;
-  gap: 1.5rem;
-  box-shadow: 0 30px 60px -40px rgba(16, 24, 40, 0.6);
+  gap: 1.25rem;
+  box-shadow: 0 26px 52px -36px rgba(16, 24, 40, 0.55);
 }
 
 .scan-card h2 {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 2rem;
 }
 
 .scan-icon {

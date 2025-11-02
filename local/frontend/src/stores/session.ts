@@ -30,15 +30,19 @@ export const useSessionStore = defineStore('session', () => {
   const totalPrice = computed(() =>
     cart.value.reduce((sum, item) => sum + item.quantity * item.price, 0)
   );
-  // Persist currency info with cart; fallback ensures UI remains readable without data.
   const currency = computed(() => cart.value[0]?.currency ?? 'EUR');
 
   function startSession(nfcUser: NfcUser) {
     // Store the authenticated user details supplied by the backend.
-    user.value = nfcUser;
+    const displayName = nfcUser.name?.trim() || 'Mitglied';
+    const greetingName = nfcUser.firstName?.trim() || displayName;
+    user.value = {
+      ...nfcUser,
+      name: displayName
+    };
     cart.value = [];
     awaitingNfcScan.value = false;
-    kioskMessage.value = `Willkommen ${nfcUser.name}!`;
+    kioskMessage.value = `Willkommen ${greetingName}!`;
   }
 
   function endSession() {

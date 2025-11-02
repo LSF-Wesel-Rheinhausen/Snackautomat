@@ -1,30 +1,24 @@
 <template>
   <section class="status-panel" aria-label="Systemstatus">
-    <!-- Tile shows live temperature from machine sensors -->
-    <div class="status-tile">
-      <i class="pi pi-thermometer" aria-hidden="true"></i>
+    <div :class="['status-tile', isHealthy ? 'status-tile--ok' : 'status-tile--warn']">
+      <i :class="['pi', isHealthy ? 'pi-check-circle' : 'pi-exclamation-circle']" aria-hidden="true"></i>
       <div>
-        <span class="label">Temperatur</span>
-        <span class="value">{{ environmentDisplay.temperature }}</span>
+        <span class="label">API Status</span>
+        <span class="value">{{ isHealthy ? 'Online' : 'Störung' }}</span>
       </div>
     </div>
-    <!-- Door tile communicates whether the cabinet is open or locked -->
-    <div class="status-tile">
-      <i
-        :class="['pi', environmentDisplay.doorOpen ? 'pi-lock-open' : 'pi-lock']"
-        aria-hidden="true"
-      ></i>
+    <div class="status-tile status-tile--info">
+      <i class="pi pi-comment" aria-hidden="true"></i>
       <div>
-        <span class="label">Tür</span>
-        <span class="value">{{ environmentDisplay.doorStatus }}</span>
+        <span class="label">Rückmeldung</span>
+        <span class="value">{{ statusMessage }}</span>
       </div>
     </div>
-    <!-- Sync tile reflects backend connectivity and pending bookings -->
-    <div class="status-tile">
-      <i class="pi pi-sync" aria-hidden="true"></i>
+    <div class="status-tile status-tile--neutral">
+      <i class="pi pi-clock" aria-hidden="true"></i>
       <div>
-        <span class="label">Sync</span>
-        <span class="value">{{ syncStatus }}</span>
+        <span class="label">Letzte Prüfung</span>
+        <span class="value">{{ lastCheckDisplay }}</span>
       </div>
     </div>
   </section>
@@ -35,33 +29,19 @@
 import { computed } from 'vue';
 import { useMachineStatus } from '@/composables/useMachineStatus';
 
-const { environment, sync } = useMachineStatus(true);
+const { healthy, statusMessage, lastCheck } = useMachineStatus(true);
 
-// Format sensor readings so templates stay clean.
-const environmentDisplay = computed(() => {
-  if (!environment.value) {
-    return {
-      temperature: '–',
-      doorStatus: 'Unbekannt',
-      doorOpen: false
-    };
-  }
-  return {
-    temperature: `${environment.value.temperatureC.toFixed(1)} °C`,
-    doorStatus: environment.value.doorOpen ? 'Offen' : 'Geschlossen',
-    doorOpen: environment.value.doorOpen
-  };
-});
+const isHealthy = computed(() => healthy.value !== false);
 
-const syncStatus = computed(() => {
-  if (!sync.value) return 'Keine Daten';
-  // Display offline indicator when backend heartbeat fails.
-  if (!sync.value.backendOnline) return 'Backend offline';
-  if (sync.value.pendingJobs > 0) {
-    // Show how many sales are still awaiting booking.
-    return `${sync.value.pendingJobs} ausstehend`;
+const lastCheckDisplay = computed(() => {
+  if (!lastCheck.value) {
+    return '–';
   }
-  return sync.value.lastSync ? 'Synchron' : 'Bereit';
+  const date = new Date(lastCheck.value);
+  if (Number.isNaN(date.getTime())) {
+    return '–';
+  }
+  return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 });
 </script>
 
@@ -96,5 +76,36 @@ const syncStatus = computed(() => {
 .value {
   font-size: 1.1rem;
   font-weight: 600;
+}
+
+.status-tile--ok {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.08));
+}
+
+.status-tile--warn {
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.18), rgba(248, 113, 113, 0.08));
+}
+
+.status-tile--info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.08));
+}
+
+.status-tile--neutral {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(148, 163, 184, 0.08));
+}
+
+@media (max-width: 1024px) {
+  .status-panel {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .status-tile {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .status-tile .pi {
+    font-size: 1.5rem;
+  }
 }
 </style>

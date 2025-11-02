@@ -1,69 +1,74 @@
 /**
- * Polls machine environment/sync status for both kiosk and admin surfaces.
- * Centralising the polling makes it easier to tune intervals for Pi hardware.
+ * Polls the `/health` endpoint to monitor backend availability.
+ * The endpoint reports overall broker/API status; this composable normalises the response
+ * for UI components such as `HomeStatusPanel`.
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import type { MachineEnvironment, SyncStatus } from '@/types/models';
 import { useApi, ApiError } from './useApi';
 
-interface MachineStatusSummary {
-  environment: MachineEnvironment;
-  sync: SyncStatus;
+interface HealthResponse {
+  status: string;
+  message?: string;
 }
 
-const POLL_INTERVAL = 15_000;
+const POLL_INTERVAL_MS = 20_000;
 
 export function useMachineStatus(fetchOnMount = true) {
-  const { get, error, loading } = useApi();
-  const status = ref<MachineStatusSummary | null>(null);
-  const lastUpdated = ref<string | null>(null);
+  const { get, loading, error } = useApi();
+  const lastCheck = ref<string | null>(null);
+  const healthy = ref<boolean | null>(null);
+  const statusMessage = ref<string>('Warte auf Status…');
+
   let timer: ReturnType<typeof setInterval> | null = null;
 
-async function loadStatus() {
+  async function fetchHealth() {
     try {
-      const { data } = await get<MachineStatusSummary>('/machine/status');
-      status.value = data;
-      lastUpdated.value = new Date().toISOString();
+      const { data } = await get<HealthResponse>('/health');
+      healthy.value = data.status?.toLowerCase() === 'ok';
+      statusMessage.value = data.message ?? (healthy.value ? 'Broker verbunden' : 'Unbekannter Zustand');
     } catch (err) {
-    if (err instanceof ApiError) {
-      console.warn('Status konnte nicht geladen werden', err);
+      healthy.value = false;
+      if (err instanceof ApiError) {
+        statusMessage.value =
+          err.payload && typeof err.payload === 'object' && 'message' in err.payload
+            ? String((err.payload as { message?: string }).message ?? 'Backend nicht erreichbar')
+            : 'Backend nicht erreichbar';
+      } else {
+        statusMessage.value = 'Verbindung fehlgeschlagen.';
+      }
+    } finally {
+      lastCheck.value = new Date().toISOString();
     }
   }
-}
 
-function startPolling() {
-  if (timer) {
-    return;
+  function startPolling() {
+    if (timer) return;
+    timer = setInterval(fetchHealth, POLL_INTERVAL_MS);
   }
-  // Poll gently to balance freshness with Pi CPU constraints.
-  timer = setInterval(loadStatus, POLL_INTERVAL);
-}
 
-function stopPolling() {
-  if (timer) {
-      clearInterval(timer);
-      timer = null;
-    }
+  function stopPolling() {
+    if (!timer) return;
+    clearInterval(timer);
+    timer = null;
   }
 
   onMounted(() => {
-    if (fetchOnMount) {
-      // Immediate poll gives the UI fresh status without waiting for first interval tick.
-      loadStatus();
-      startPolling();
-    }
+    if (!fetchOnMount) return;
+    fetchHealth();
+    startPolling();
   });
 
-  onBeforeUnmount(() => stopPolling());
+  onBeforeUnmount(() => {
+    stopPolling();
+  });
 
   return {
-    status,
     loading,
     error,
-    lastUpdated: computed(() => lastUpdated.value),
-    environment: computed(() => status.value?.environment),
-    sync: computed(() => status.value?.sync),
-    loadStatus,
+    healthy: computed(() => healthy.value),
+    statusMessage: computed(() => statusMessage.value),
+    lastCheck,
+    refresh: fetchHealth,
     startPolling,
     stopPolling
   };

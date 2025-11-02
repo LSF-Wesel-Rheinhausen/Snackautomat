@@ -8,7 +8,7 @@ export interface SnackItem {
   stock: number;
   category: string;
   allergens?: string[];
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 export interface CartItem extends SnackItem {
@@ -25,8 +25,10 @@ export interface AdminProfile {
 export interface NfcUser {
   id: string;
   name: string;
-  balance: number;
-  isAdmin: boolean;
+  firstName?: string;
+  lastName?: string;
+  memberId?: string;
+  raw?: unknown;
 }
 
 export interface PurchaseReceipt {

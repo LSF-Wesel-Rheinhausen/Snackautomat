@@ -47,19 +47,17 @@
           <span>{{ formatPrice(totalPrice) }}</span>
         </li>
         <li>
-          <span>Verfügbares Guthaben</span>
-          <span>{{ formatPrice(balance) }}</span>
+          <span>Verantwortlicher</span>
+          <span>{{ sessionStore.user?.name ?? 'Unbekannt' }}</span>
         </li>
       </ul>
       <Message v-if="!cartItems.length" severity="info">Bitte fügen Sie Produkte hinzu.</Message>
-      <Message v-else-if="balance < totalPrice" severity="warn">
-        Guthaben reicht nicht aus.
-      </Message>
+      <Message v-else severity="info">Buchung wird automatisch über Vereinsflieger abgerechnet.</Message>
       <Button
         label="Kauf abschließen"
         icon="pi pi-check"
         class="touch-button"
-        :disabled="cartItems.length === 0 || balance < totalPrice || loading"
+        :disabled="cartItems.length === 0 || loading"
         :loading="loading"
         @click="checkout"
       />
@@ -92,7 +90,7 @@ const { post, loading } = useApi();
 
 const cartItems = computed(() => sessionStore.cart);
 const totalPrice = computed(() => sessionStore.totalPrice);
-const balance = computed(() => sessionStore.user?.balance ?? 0);
+const balance = computed(() => null);
 const currency = computed(() => sessionStore.currency);
 const quantities = reactive<Record<string, number>>({});
 
@@ -109,6 +107,9 @@ onMounted(() => {
 });
 
 function formatPrice(amount: number) {
+  if (!Number.isFinite(amount)) {
+    return '—';
+  }
   // Use German locale formatting to match physical kiosk expectations.
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
@@ -128,20 +129,53 @@ function remove(itemId: string) {
 }
 
 async function checkout() {
+  const user = sessionStore.user;
+  if (!user) {
+    toast.add({ severity: 'warn', summary: 'Anmeldung erforderlich', detail: 'Bitte erneut anmelden.', life: 2500 });
+    router.push({ name: 'kiosk-landing' });
+    return;
+  }
+
+  const memberId = user.memberId ?? user.id;
+  if (!memberId) {
+    toast.add({ severity: 'error', summary: 'Fehlende ID', detail: 'Die Mitgliedsnummer konnte nicht ermittelt werden.', life: 3000 });
+    return;
+  }
+
   try {
-    // Keep payload minimal; backend enriches it with slot + price verification.
-    const payload = {
-      userId: sessionStore.user?.id,
-      items: cartItems.value.map((item) => ({ id: item.id, quantity: item.quantity })),
-      total: totalPrice.value
+    for (const item of cartItems.value) {
+      const row = item.slot || item.id;
+      if (!row) {
+        throw new Error('Produkt enthält keine Slot-ID.');
+      }
+
+      for (let count = 0; count < item.quantity; count += 1) {
+        await post<{ message: string }>('/Buy', {
+          row,
+          memberid: memberId
+        });
+      }
+    }
+
+    const receipt: PurchaseReceipt = {
+      saleId: `local-${Date.now()}`,
+      total: totalPrice.value,
+      currency: currency.value,
+      completedAt: new Date().toISOString(),
+      items: cartItems.value.map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      }))
     };
-    const { data } = await post<PurchaseReceipt>('/sales/checkout', payload);
-    sessionStore.saveReceipt(data);
+
+    sessionStore.saveReceipt(receipt);
     sessionStore.clearCart();
     toast.add({ severity: 'success', summary: 'Vielen Dank!', detail: 'Snackausgabe gestartet', life: 2000 });
     router.replace({ name: 'kiosk-confirmation' });
   } catch (error) {
-    // Keep the toast generic; backend already logs specific issues.
+    console.error('Checkout error', error);
     toast.add({ severity: 'error', summary: 'Fehler', detail: 'Checkout nicht möglich', life: 3000 });
   }
 }
@@ -155,7 +189,7 @@ function goToCatalog() {
 <style scoped>
 .checkout {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
   grid-template-columns: minmax(0, 2.5fr) minmax(300px, 1fr);
   align-items: start;
 }
@@ -163,14 +197,14 @@ function goToCatalog() {
 .checkout-main,
 .checkout-summary {
   background: color-mix(in srgb, var(--surface-card) 94%, transparent);
-  border-radius: 28px;
-  padding: 2rem;
+  border-radius: 24px;
+  padding: 1.6rem;
   box-shadow: 0 24px 48px -32px rgba(16, 24, 40, 0.5);
 }
 
 .cart-list {
   display: grid;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .cart-item {
@@ -237,6 +271,17 @@ function goToCatalog() {
       'price quantity'
       'line line'
       'remove remove';
+  }
+}
+
+@media (max-height: 700px) {
+  .checkout-main,
+  .checkout-summary {
+    padding: 1.4rem;
+  }
+
+  .cart-item {
+    padding: 0.85rem;
   }
 }
 </style>
