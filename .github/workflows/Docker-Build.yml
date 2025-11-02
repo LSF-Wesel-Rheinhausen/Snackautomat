@@ -81,5 +81,5 @@ jobs:
             test -n "$CID"
 
             curl --fail --insecure -sS -X POST \
-              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start" \
+              "$PORTAINER_URL/api/endpoints/1/docker/containers/$CID/start" \
               -H "X-API-Key: $API_KEY"
