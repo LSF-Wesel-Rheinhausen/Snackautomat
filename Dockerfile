@@ -9,7 +9,7 @@ COPY . /broker
 WORKDIR /broker
 #RUN apt-get update && apt-get install -y python3 python3-pip
 COPY /broker/requirements.txt .
-RUN touch /broker/token.json
+RUN touch /broker/broker/token.json
 RUN python -m pip install --upgrade pip setuptools wheel \
  && pip install --no-cache-dir -r requirements.txt
 EXPOSE 8123
