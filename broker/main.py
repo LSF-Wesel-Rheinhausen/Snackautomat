@@ -98,12 +98,12 @@ def ensure_ssl_certificates(cert_filename='cert.pem', key_filename='key.pem'):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    try:
-        app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=('cert.pem', 'key.pem'))
-    except Exception as e:
+    if not os.path.exists('cert.pem') or not os.path.exists('key.pem'):
         logging.error(f"Error starting server with SSL: {e}")
         cert_path, key_path = ensure_ssl_certificates()
         app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=(cert_path, key_path))
+    else:
+        app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=('cert.pem', 'key.pem'))
 
 
 
