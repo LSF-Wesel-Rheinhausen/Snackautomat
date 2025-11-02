@@ -44,6 +44,7 @@
     >
       Aktuell sind keine Produkte in dieser Kategorie verfügbar.
     </Message>
+      <Message v-else-if="!hasItems" severity="warn" icon="pi pi-exclamation-triangle" class="empty-message">Keine Produkte verfügbar.</Message>
   </section>
 </template>
 
@@ -84,6 +85,8 @@ const categoryOptions = computed(() => [
   }))
 ]);
 
+const hasItems = computed(() => items.value.length > 0);
+
 const filteredItems = computed(() => {
   if (!selectedCategory.value) {
     // No filter chosen -> return the entire catalog list.
@@ -108,6 +111,9 @@ function goToCheckout() {
   // Navigate client to the checkout summary view.
   router.push({ name: 'kiosk-checkout' });
 }
+const reload = async () => {
+  await itemsStore.fetchItems(true);
+};
 </script>
 
 <style scoped>

@@ -140,16 +140,18 @@ export const useItemsStore = defineStore('items', () => {
       }
 
       if (!normalized.length) {
-        throw new Error('Katalog leer oder unverständlich');
+        items.value = [];
+        lastUpdated.value = new Date().toISOString();
+        return;
       }
 
       setItems(normalized);
     } catch (error) {
+      items.value = [];
+      lastUpdated.value = new Date().toISOString();
       if (error instanceof ApiError) {
-        console.warn('Katalog konnte nicht geladen werden, verwende Fallback', error);
+        console.warn('Katalog konnte nicht geladen werden', error);
       }
-      // Ensure UI keeps functioning by falling back to predefined inventory.
-      setItems(FALLBACK_ITEMS);
     }
   }
 

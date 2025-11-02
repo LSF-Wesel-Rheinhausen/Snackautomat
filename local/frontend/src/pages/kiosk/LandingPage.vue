@@ -40,6 +40,7 @@
         </template>
       </Carousel>
     </div>
+    <Message v-else severity="warn" class="featured-empty">Keine Produkte gefunden.</Message>
   </section>
 </template>
 
@@ -47,6 +48,7 @@
 // Entry screen: only fetches catalog preview, defers logic to subsequent routes.
 import Button from 'primevue/button';
 import Carousel from 'primevue/carousel';
+import Message from 'primevue/message';
 import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import SnackCard from '@/components/SnackCard.vue';
@@ -152,4 +154,10 @@ function goToCatalog() {
     font-size: 2rem;
   }
 }
+
+
+.featured-empty {
+  text-align: center;
+}
+
 </style>

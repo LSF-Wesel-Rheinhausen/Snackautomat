@@ -91,9 +91,9 @@ button {
 
 @media (max-height: 700px) {
   :root {
-  --surface-card: #ffffff;
-  --surface-ground: transparent;
-  --surface-overlay: rgba(255, 255, 255, 0.85);
+    --surface-card: #ffffff;
+    --surface-ground: transparent;
+    --surface-overlay: rgba(255, 255, 255, 0.85);
 
     font-size: 15px;
   }
