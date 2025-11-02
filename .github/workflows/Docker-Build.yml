@@ -55,7 +55,7 @@ jobs:
               curl --insecure -sS -X POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" -H "X-API-Key: $API_KEY" || true
               curl --fail --insecure -sS -X DELETE "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" -H "X-API-Key: $API_KEY"
             fi
-
+            curl --insecure -X POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/create?fromImage=${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \-H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" 
             # Create-Payload: .env-Datei readonly nach /app/.env mounten
             CREATE_PAYLOAD=$(jq -n \
               --arg img "$IMAGE" \
