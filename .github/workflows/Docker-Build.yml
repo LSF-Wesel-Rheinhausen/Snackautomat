@@ -135,11 +135,17 @@ jobs:
           CID=$(echo "$RESP" | jq -r '.Id // empty')
           [ -n "$CID" ] || { echo "Fehler: Keine Container-ID im Create-Response"; echo "$RESP"; exit 1; }
           
-          # 4) Start
+          # 4) Start (ohne Body – Content-Length: 0 erzwingen)
           echo "Starte Container …"
-          curl_dbg POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start"
-          
-          # 5) Optional: Inspect für Status/Ports
-          echo "Inspect …"
-          inspect=$(curl_dbg GET "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/json")
-          echo "$inspect" | jq -r '[.Name, .State.Status, .NetworkSettings.Ports] | @tsv'
+          start_resp=$(curl --insecure -s -S -w "\n%{http_code}" -X POST \
+            -H "X-API-Key: $API_KEY" \
+            -H "Content-Length: 0" \
+            "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start")
+          start_code="$(printf "%s" "$start_resp" | tail -n1)"
+          if [ "$start_code" -ge 400 ]; then
+            echo "HTTP $start_code beim Start"
+            printf "%s" "$start_resp" | sed '$d'
+            exit 1
+          fi
+          echo "Start OK"
+
