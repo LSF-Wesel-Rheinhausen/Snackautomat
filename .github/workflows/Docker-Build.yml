@@ -24,59 +24,122 @@ jobs:
          echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
          echo ${{ secrets.SUDO }} | sudo docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
   deploy:
-      runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
-      needs: build
-      steps:
-        - name: Create & start container
-          env:
-            PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
-            ENDPOINT_ID: "2"
-            IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
-            API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
-            CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
-            CONFIG_PATH: ${{ secrets.CONFIG_PATH }}      # absoluter Pfad zur .env auf dem Zielhost
-            CONTAINER_PORT: "8124"                       # Port IM Container
-            HOST_PORT: "8124"                            # Port auf dem Host
-            CONTAINER_ENV_PATH: "/.env"              # Zielpfad IM Container
-          run: |
-            set -euo pipefail
-            command -v jq >/dev/null || sudo apt-get update && sudo apt-get install -y jq
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - name: Create & start container (Portainer API)
+        env:
+          PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
+          ENDPOINT_ID: "2"
+          IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+          API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
+          CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
 
-            # Existenz der .env-Datei auf dem Zielhost prüfen (sonst scheitert Docker mit 400)
-            if [ ! -f "$CONFIG_PATH" ]; then
-              echo "Fehler: CONFIG_PATH zeigt nicht auf eine Datei: $CONFIG_PATH"; exit 1
+          # Host-Dateien (absolute Pfade)
+          CONFIG_PATH: ${{ secrets.CONFIG_PATH }}      # z. B. /home/runner/env_prod
+          TOKEN_PATH: ${{ secrets.TOKEN_PATH }}       # z. B. /home/runner/token.json
+
+          # Registry-Creds für Pull (falls Image privat; bei public unschädlich)
+          REG_USER: ${{ secrets.DOCKER_USERNAME }}
+          REG_PASS: ${{ secrets.DOCKER_PASSWORD }}
+
+          # Ports
+          CONTAINER_PORT: "8124"
+          HOST_PORT: "8124"
+
+          # Zielpfade im Container (ABSOLUT)
+          CONTAINER_ENV_PATH: "/broker/.env"
+          CONTAINER_TOKEN_PATH: "/broker/broker/token.json"
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
+          
+          # Eingangsprüfungen
+          [ -f "$CONFIG_PATH" ] || { echo "Fehler: CONFIG_PATH ist keine Datei: $CONFIG_PATH"; exit 1; }
+          [ -f "$TOKEN_PATH"  ] || { echo "Fehler: TOKEN_PATH ist keine Datei: $TOKEN_PATH"; exit 1; }
+          
+          curl_dbg() {
+            # curl_dbg METHOD URL [DATA_JSON]
+            local method="$1"; local url="$2"; local data="${3:-}"
+            local resp body code
+            if [ -n "$data" ]; then
+              resp=$(curl --insecure -s -S -w "\n%{http_code}" -X "$method" \
+                -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" \
+                "$url" -d "$data")
+            else
+              resp=$(curl --insecure -s -S -w "\n%{http_code}" -X "$method" \
+                -H "X-API-Key: $API_KEY" "$url")
             fi
-
-            # Alten Container entfernen (idempotent)
-            OLD_ID=$(curl --insecure -sS -H "X-API-Key: $API_KEY" \
-              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/json?all=1" \
-              | jq -r ".[] | select(.Names[]? == \"/$CONTAINER_NAME\") | .Id // empty")
-            if [ -n "${OLD_ID:-}" ]; then
-              curl --insecure -sS -X POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" -H "X-API-Key: $API_KEY" || true
-              curl --fail --insecure -sS -X DELETE "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" -H "X-API-Key: $API_KEY"
+            body="$(printf "%s" "$resp" | sed '$d')"
+            code="$(printf "%s" "$resp" | tail -n1)"
+            echo "HTTP $code"
+            if [ "$code" -ge 400 ]; then
+              echo "---- Response body ----"
+              echo "$body"
+              echo "-----------------------"
+              exit 1
             fi
-
-            # Create-Payload: .env-Datei readonly nach /app/.env mounten
-            CREATE_PAYLOAD=$(jq -n \
-              --arg img "$IMAGE" \
-              --arg bind "${CONFIG_PATH}:${CONTAINER_ENV_PATH}:ro" \
-              --arg cport "$CONTAINER_PORT" \
-              --arg hport "$HOST_PORT" \
-              '{
-                "Image": $img,
-                "HostConfig": {
-                  "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
-                  "ExposedPorts": { ($cport + "/tcp"): {} },
-                  "Binds": [ $bind ],
-                  "RestartPolicy": { "Name": "unless-stopped" }
-                }
-              }')
-
-            RESP=$(curl --fail --insecure -sS -X POST \
-              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
-              -H "X-API-Key: $API_KEY" \
-              -H "Content-Type: application/json" \
-              -d "$CREATE_PAYLOAD")
-
-            CID=$(echo "$RESP" | jq -r '.Id')
-            test -n "$CID"
+            printf "%s" "$body"
+          }
+          
+          # 1) Image PULL (vor Create), mit Registry-Auth Header
+          AUTH_B64=$(printf '{"username":"%s","password":"%s"}' "$REG_USER" "$REG_PASS" | base64 -w0 2>/dev/null || printf '{"username":"%s","password":"%s"}' "$REG_USER" "$REG_PASS" | base64)
+          echo "Pulle Image $IMAGE …"
+          pull_resp=$(curl --insecure -s -S -w "\n%{http_code}" -X POST \
+            -H "X-API-Key: $API_KEY" \
+            -H "X-Registry-Auth: $AUTH_B64" \
+            "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/images/create?fromImage=$IMAGE")
+          pull_code="$(printf "%s" "$pull_resp" | tail -n1)"
+          if [ "$pull_code" -ge 400 ]; then
+            echo "HTTP $pull_code beim Pull"
+            printf "%s" "$pull_resp" | sed '$d'
+            exit 1
+          fi
+          echo "Image pull OK"
+          
+          # 2) Alten Container entfernen (idempotent)
+          LIST_URL="$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/json?all=1"
+          OLD_ID=$(curl --insecure -sS -H "X-API-Key: $API_KEY" "$LIST_URL" \
+            | jq -r ".[] | select(.Names[]? == \"/$CONTAINER_NAME\") | .Id // empty")
+          if [ -n "${OLD_ID:-}" ]; then
+            echo "Stoppe alten Container $OLD_ID …"
+            curl_dbg POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" || true
+            echo "Lösche alten Container $OLD_ID …"
+            curl_dbg DELETE "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1"
+          fi
+          
+          # 3) Create-Payload (.env + token.json read-only binden, Ports korrekt)
+          CREATE_PAYLOAD=$(jq -n \
+            --arg img "$IMAGE" \
+            --arg env_bind "${CONFIG_PATH}:${CONTAINER_ENV_PATH}:ro" \
+            --arg tok_bind "${TOKEN_PATH}:${CONTAINER_TOKEN_PATH}:ro" \
+            --arg cport "$CONTAINER_PORT" \
+            --arg hport "$HOST_PORT" \
+            '{
+              "Image": $img,
+              "ExposedPorts": { ($cport + "/tcp"): {} },
+              "HostConfig": {
+                "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
+                "Binds": [ $env_bind, $tok_bind ],
+                "RestartPolicy": { "Name": "unless-stopped" }
+              }
+            }')
+          
+          echo "Erzeuge Container $CONTAINER_NAME …"
+          RESP=$(curl --fail --insecure -sS -X POST \
+            "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
+            -H "X-API-Key: $API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$CREATE_PAYLOAD")
+          
+          CID=$(echo "$RESP" | jq -r '.Id // empty')
+          [ -n "$CID" ] || { echo "Fehler: Keine Container-ID im Create-Response"; echo "$RESP"; exit 1; }
+          
+          # 4) Start
+          echo "Starte Container …"
+          curl_dbg POST "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start"
+          
+          # 5) Optional: Inspect für Status/Ports
+          echo "Inspect …"
+          inspect=$(curl_dbg GET "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/json")
+          echo "$inspect" | jq -r '[.Name, .State.Status, .NetworkSettings.Ports] | @tsv'
