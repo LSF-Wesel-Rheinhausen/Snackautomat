@@ -4,3 +4,5 @@ Flask-HTTPAuth
 requests
 python-dotenv
 Werkzeug
+PyJWT
+flask_jwt_extended

@@ -6,47 +6,112 @@ on:
       - main  # Setzen Sie hier den Namen Ihres Haupt-Branches ein
 
 jobs:
-  deploy:
+  build:
     runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Build Docker image
-      run: |
-       echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-       echo ${{ secrets.SUDO }} | sudo -S docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest .
+      - name: Build Docker image
+        run: |
+         echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+         echo ${{ secrets.SUDO }} | sudo -S docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest .
 
-    - name: Push Docker image to Registry
-      run: |
-       echo ${{ secrets.SUDO }} | sudo -S --validate
-       echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
-       echo ${{ secrets.SUDO }} | sudo docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+      - name: Push Docker image to Registry
+        run: |
+         echo ${{ secrets.SUDO }} | sudo -S --validate
+         echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+         echo ${{ secrets.SUDO }} | sudo docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+  deploy:
+      runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
+      needs: build
+      steps:
+        - name: Create & start container
+          env:
+            PORTAINER_URL: https://${{ secrets.PORTAINER_IP }}:9443
+            ENDPOINT_ID: "2"
+            IMAGE: docker.io/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest
+            API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
+            CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+            CONFIG_PATH: ${{ secrets.CONFIG_PATH }}   # absoluter Host-Pfad!
+            CONTAINER_PORT: "8123"                    # anpassen: echter Port IN deinem Container
+            HOST_PORT: "8123"                         # anpassen: gewünschter Port auf dem Host
+          run: |
+            set -euo pipefail
+            command -v jq >/dev/null || sudo apt-get update && sudo apt-get install -y jq
 
-    - name: Deploy to Portainer
-      run: |
-        curl --insecure -X POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/${{ secrets.CONTAINER_NAME }}/stop" \
-         -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-        curl --insecure -X DELETE "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/${{ secrets.CONTAINER_NAME }}" \
-         -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-        curl --insecure -X DELETE "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \
-         -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-        curl --insecure -X POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/images/create?fromImage=${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest" \
-         -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}"
-        response=$(curl --insecure -X  POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/create?name=${{ secrets.CONTAINER_NAME }}" \
-             -H "X-API-Key: ${{ secrets.PORTAINER_API_TOKEN }}" \
-             -H "Content-Type: application/json" \
-             -d '{
-                   "Image": "${{ secrets.DOCKER_USERNAME }}/${{ secrets.CONTAINER_NAME }}:latest",
-                   "HostConfig": {
-                     "PortBindings": { "8124/tcp": [{ "HostPort": "8123" }] } ,
-                     "Binds": ["${{ secrets.CONFIG_PATH }}:/config/config.yaml"],
-                     "RestartPolicy": { "Name": "unless-stopped" }
-                   }
-                 }')
-        container_id=$(echo $response | grep -o '"Id":"[^"]*' | grep -o '[^"]*$')
-        api_token=${{ secrets.PORTAINER_API_TOKEN }}
-        curl --insecure -X  POST "https://${{ secrets.PORTAINER_IP }}:9443/api/endpoints/2/docker/containers/${container_id}/start" \
-          -H "X-API-Key: ${api_token}"
-        
+            # 1) Host-Pfad validieren
+            if [ -z "${CONFIG_PATH:-}" ]; then
+              echo "CONFIG_PATH secret ist leer"; exit 1
+            fi
+            if [ ! -e "$CONFIG_PATH" ]; then
+              echo "CONFIG_PATH existiert nicht auf dem Zielhost: $CONFIG_PATH"; exit 1
+            fi
+
+            # 2) Bind je nach Typ (Datei vs. Ordner) korrekt setzen
+            if [ -d "$CONFIG_PATH" ]; then
+              BIND_TARGET="/config:ro"
+              BIND_SRC="$CONFIG_PATH"
+            else
+              # Datei -> Datei-Mount; Datei MUSS existieren
+              BIND_TARGET="/config/config.yaml:ro"
+              BIND_SRC="$CONFIG_PATH"
+            fi
+            BIND_SPEC="${BIND_SRC}:${BIND_TARGET}"
+
+            # 3) Alten Container (falls vorhanden) idempotent entfernen
+            OLD_ID=$(curl --insecure -sS -H "X-API-Key: $API_KEY" \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/json?all=1" \
+              | jq -r ".[] | select(.Names[]? == \"/$CONTAINER_NAME\") | .Id // empty")
+
+            if [ -n "${OLD_ID:-}" ]; then
+              curl --insecure -sS -X POST \
+                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID/stop" \
+                -H "X-API-Key: $API_KEY" || true
+              curl --fail --insecure -sS -X DELETE \
+                "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$OLD_ID?force=1&v=1" \
+                -H "X-API-Key: $API_KEY"
+            fi
+
+            # 4) Create-Payload bauen
+            CREATE_PAYLOAD=$(jq -n \
+              --arg img "$IMAGE" \
+              --arg bind "$BIND_SPEC" \
+              --arg cport "$CONTAINER_PORT" \
+              --arg hport "$HOST_PORT" \
+              '{
+                "Image": $img,
+                "HostConfig": {
+                  "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
+                  "Binds": [ $bind ],
+                  "RestartPolicy": { "Name": "unless-stopped" }
+                }
+              }')
+
+            echo "Create-Payload:"
+            echo "$CREATE_PAYLOAD" | jq .
+
+            # 5) Container erstellen, HTTP-Code und Body getrennt loggen
+            HTTP_CODE=$(mktemp)
+            CREATE_RESP=$(curl --insecure -sS -X POST \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/create?name=$CONTAINER_NAME" \
+              -H "X-API-Key: $API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$CREATE_PAYLOAD" \
+              -w "%{http_code}" -o >(cat) )
+            echo "$CREATE_RESP" | tail -n1 > "$HTTP_CODE"
+
+            if [ "$(cat "$HTTP_CODE")" != "201" ]; then
+              echo; echo "Create-Fehler (HTTP $(cat "$HTTP_CODE")):"
+              echo "$CREATE_RESP"
+              exit 1
+            fi
+
+            CID=$(echo "$CREATE_RESP" | head -n-1 | jq -r '.Id')
+            test -n "$CID" || { echo "Keine Container-ID erhalten"; exit 1; }
+
+            # 6) Start
+            curl --fail --insecure -sS -X POST \
+              "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start" \
+              -H "X-API-Key: $API_KEY"
