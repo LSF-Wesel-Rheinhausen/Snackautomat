@@ -202,7 +202,7 @@ def get_shop_items():
 
 def get_fu_products():
     articles = get_shop_items_cached()
-    prefix="FU_"
+    prefix="Snackautomat Reihe "
     filtered_articles = {
         item_id: details
         for item_id, details in articles.items()
@@ -271,7 +271,7 @@ def get_valid_fu_products():
         for price in details.get("prices", []):
             try:
                 # Parse dates
-                valid_from = datetime.strptime(price["validfrom"], "%Y-%m-%d").date()
+                valid_from = datetime.strptime(str(price["validfrom"]), "%Y-%m-%d").date()
                 valid_to = datetime.strptime(price["validto"], "%Y-%m-%d").date()
 
                 # Check if today is within the range
