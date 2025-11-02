@@ -35,7 +35,7 @@ jobs:
             API_KEY: ${{ secrets.PORTAINER_API_TOKEN }}
             CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
             CONFIG_PATH: ${{ secrets.CONFIG_PATH }}      # absoluter Pfad zur .env auf dem Zielhost
-            CONTAINER_PORT: "8123"                       # Port IM Container
+            CONTAINER_PORT: "8124"                       # Port IM Container
             HOST_PORT: "8124"                            # Port auf dem Host
             CONTAINER_ENV_PATH: "/app/.env"              # Zielpfad IM Container
           run: |

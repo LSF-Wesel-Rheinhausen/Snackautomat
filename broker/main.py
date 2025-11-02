@@ -98,7 +98,7 @@ def ensure_ssl_certificates(cert_filename='cert.pem', key_filename='key.pem'):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    app.run(debug=True, host="0.0.0.0", port=8123, ssl_context=('devcert.pem', 'devkey.pem'))
+    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=('devcert.pem', 'devkey.pem'))
 
 
 
