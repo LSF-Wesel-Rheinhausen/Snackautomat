@@ -2,17 +2,19 @@
   <Card :class="['snack-card', { disabled }]">
     <template #title>
       <div class="title-row">
-        <span class="name">{{ item.name }}</span>
-        <Tag
-          v-if="showStock"
-          :value="stockLabel"
-          :severity="stockSeverity"
-          rounded
-        />
+        <div class="titles">
+          <span v-if="primaryLabel" class="designation">{{ primaryLabel }}</span>
+          <span v-if="secondaryLabel" class="name">{{ secondaryLabel }}</span>
+        </div>
+        <Tag v-if="showStock && stockLabel !== null" :value="stockLabel" :severity="stockSeverity" rounded />
       </div>
     </template>
     <template #subtitle>
-      <span class="category">Slot {{ item.slot }} · {{ item.category }}</span>
+      <span class="category">
+        <template v-if="item.slot">{{ item.slot }}</template>
+        <template v-if="item.slot && item.category"> · </template>
+        <template v-if="item.category">{{ item.category }}</template>
+      </span>
     </template>
     <template #content>
       <div class="price">
@@ -26,13 +28,8 @@
       </ul>
     </template>
     <template #footer>
-      <Button
-        label="Hinzufügen"
-        icon="pi pi-plus"
-        class="touch-button"
-        :disabled="disabled || isOutOfStock"
-        @click="emit('add', item)"
-      />
+      <Button label="Hinzufügen" icon="pi pi-plus" class="touch-button" :disabled="disabled || isOutOfStock"
+        @click="emit('add', item)" />
     </template>
   </Card>
 </template>
@@ -55,17 +52,46 @@ const emit = defineEmits<{
   (e: 'add', item: SnackItem): void;
 }>();
 
+const designationLabel = computed(() => {
+  const raw = props.item.designation?.trim();
+  return raw && raw.length > 0 ? raw : null;
+});
+
+const nameLabel = computed(() => {
+  const raw = typeof props.item.name === 'string' ? props.item.name.trim() : '';
+  return raw.length > 0 ? raw : null;
+});
+
+const primaryLabel = computed(() => designationLabel.value ?? nameLabel.value ?? null);
+const secondaryLabel = computed(() => {
+  if (!designationLabel.value || !nameLabel.value) {
+    return null;
+  }
+  return designationLabel.value !== nameLabel.value ? nameLabel.value : null;
+});
+
 // True if stock metadata marks the item as depleted.
 const isOutOfStock = computed(() => props.item.stock <= 0);
 // Friendly stock label for staff to quickly glance at.
-const stockLabel = computed(() => (props.item.stock <= 0 ? 'Leer' : `${props.item.stock}x`));
+const stockLabel = computed(() => {
+  const stock = props.item.stock;
+  if (stock === undefined || stock === null) {
+    return null;
+  }
+  return String(stock);
+});
 const stockSeverity = computed(() => {
   if (props.item.stock <= 0) return 'danger';
   if (props.item.stock < 3) return 'warning';
   return 'success';
 });
 // Price label uses currency provided by backend.
-const priceLabel = computed(() => props.item.price.toFixed(2) + ' ' + props.item.currency);
+const priceLabel = computed(() => {
+  const price = Number.isFinite(props.item.price) ? props.item.price : 0;
+  const formatted = price.toFixed(2);
+  const currency = typeof props.item.currency === 'string' ? props.item.currency.trim() : '';
+  return currency ? `${formatted} ${currency}` : formatted;
+});
 </script>
 
 <style scoped>
@@ -93,9 +119,22 @@ const priceLabel = computed(() => props.item.price.toFixed(2) + ' ' + props.item
   align-items: center;
 }
 
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.designation {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .name {
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-color-secondary);
 }
 
 .category {

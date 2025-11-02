@@ -10,8 +10,12 @@
       <div v-else class="cart-list" role="list">
         <div v-for="item in cartItems" :key="item.id" class="cart-item" role="listitem">
           <div class="info">
-            <h3>{{ item.name }}</h3>
-            <p>Slot {{ item.slot }} · {{ item.category }}</p>
+            <h3>{{ productLabel(item) }}</h3>
+            <p>
+              <template v-if="item.slot">{{ item.slot }}</template>
+              <template v-if="item.slot && item.category"> · </template>
+              <template v-if="item.category">{{ item.category }}</template>
+            </p>
           </div>
           <div class="price">{{ formatPrice(item.price) }}</div>
           <div class="quantity-control">
@@ -27,7 +31,7 @@
               incrementButtonClass="p-button-rounded p-button-text"
               incrementButtonIcon="pi pi-plus"
               decrementButtonIcon="pi pi-minus"
-              aria-label="Anzahl für {{ item.name }}"
+              aria-label="Anzahl für {{ productLabel(item) }}"
               @update:modelValue="(value) => updateQuantity(item.id, value)"
              />
           </div>
@@ -82,7 +86,7 @@ import { useToast } from 'primevue/usetoast';
 import { useSessionStore } from '@/stores/session';
 import { useApi } from '@/composables/useApi';
 import { API_ENDPOINTS } from '@/config/api';
-import type { PurchaseReceipt } from '@/types/models';
+import type { PurchaseReceipt, SnackItem } from '@/types/models';
 
 const router = useRouter();
 const toast = useToast();
@@ -94,6 +98,7 @@ const totalPrice = computed(() => sessionStore.totalPrice);
 const balance = computed(() => null);
 const currency = computed(() => sessionStore.currency);
 const quantities = reactive<Record<string, number>>({});
+const productLabel = (item: SnackItem) => item.designation ?? item.name;
 
 onMounted(() => {
   if (!cartItems.value.length) {
@@ -165,7 +170,7 @@ async function checkout() {
       completedAt: new Date().toISOString(),
       items: cartItems.value.map((item) => ({
         id: item.id,
-        name: item.name,
+        name: productLabel(item),
         quantity: item.quantity,
         price: item.price
       }))

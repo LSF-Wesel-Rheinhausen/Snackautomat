@@ -1,6 +1,7 @@
 export interface SnackItem {
   id: string;
   name: string;
+  designation?: string;
   price: number;
   currency: string;
   image?: string;

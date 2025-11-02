@@ -99,9 +99,10 @@ const filteredItems = computed(() => {
 function addToCart(item: SnackItem) {
   // Delegate the state change to Pinia so other views stay in sync.
   sessionStore.addToCart(item);
+  const label = item.designation ?? item.name;
   toast.add({
     severity: 'success',
-    summary: item.name,
+    summary: label,
     detail: 'Zum Warenkorb hinzugefügt',
     life: 2000
   });

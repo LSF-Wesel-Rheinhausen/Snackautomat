@@ -59,7 +59,9 @@ export const useItemsStore = defineStore('items', () => {
     // Build a count map so the kiosk can show the number of products per category tab.
     const unique = new Map<string, number>();
     items.value.forEach((item) => {
-      unique.set(item.category, (unique.get(item.category) ?? 0) + 1);
+      if (item.category && item.category.trim().length > 0) {
+        unique.set(item.category, (unique.get(item.category) ?? 0) + 1);
+      }
     });
     return Array.from(unique.entries())
       .map(([name, count]) => ({ name, count }))
@@ -68,46 +70,126 @@ export const useItemsStore = defineStore('items', () => {
 
   const featuredItems = computed(() => items.value.slice(0, 4));
 
-  function normalizeProduct(raw: any): SnackItem | null {
+  function normalizeProduct(raw: any, fallbackId?: string): SnackItem | null {
     if (!raw || typeof raw !== 'object') {
       return null;
     }
 
+    const priceEntry = Array.isArray(raw.prices)
+      ? raw.prices.find((entry: unknown) => entry && typeof entry === 'object')
+      : undefined;
+
     const id = String(
-      raw.id ?? raw.itemid ?? raw.itemId ?? raw.productId ?? raw.row ?? raw.slot ?? ''
+      raw.id ??
+        raw.itemid ??
+        raw.itemId ??
+        raw.productId ??
+        raw.row ??
+        raw.slot ??
+        raw.articleid ??
+        raw.articleId ??
+        fallbackId ??
+        ''
     ).trim();
 
     if (!id) {
       return null;
     }
 
-    const slot = String(raw.row ?? raw.slot ?? id).trim();
-    const nameSource =
-      raw.name ?? raw.title ?? raw.product_name ?? raw.productName ?? raw.label ?? 'Produkt';
-    const name = typeof nameSource === 'string' && nameSource.trim() ? nameSource.trim() : 'Produkt';
+    const slotCandidate = raw.row ?? raw.slot ?? raw.articleid ?? raw.articleId ?? fallbackId ?? id;
+    const slot = typeof slotCandidate === 'string' ? slotCandidate.trim() : String(slotCandidate ?? '').trim();
 
-    const priceValue = Number(raw.price ?? raw.cost ?? raw.unitPrice ?? raw.value ?? 0);
-    const stockValue = Number(raw.stock ?? raw.quantity ?? raw.amount ?? raw.available ?? 0);
-    const currency = String(raw.currency ?? raw.currencyCode ?? 'EUR');
-    const categorySource = raw.category ?? raw.type ?? raw.group ?? 'Allgemein';
-    const category = typeof categorySource === 'string' && categorySource.trim()
-      ? categorySource.trim()
-      : 'Allgemein';
+    const designation =
+      typeof raw.designation === 'string' && raw.designation.trim()
+        ? raw.designation.trim()
+        : undefined;
+    const nameSource =
+      raw.name ??
+      raw.title ??
+      raw.product_name ??
+      raw.productName ??
+      raw.label ??
+      raw.articleName;
+    const fallbackName =
+      typeof nameSource === 'string' && nameSource.trim() ? nameSource.trim() : undefined;
+    const name = designation ?? fallbackName ?? '';
+
+    const toNumber = (value: unknown) => {
+      if (typeof value === 'string') {
+        const sanitized = value.replace(/\s/g, '').replace(',', '.');
+        const normalized = Number(sanitized);
+        return Number.isFinite(normalized) ? normalized : 0;
+      }
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : 0;
+    };
+
+    const priceCandidates = [
+      raw.price,
+      raw.cost,
+      raw.unitPrice,
+      raw.value,
+      raw.unitprice,
+      priceEntry && (priceEntry.unitPrice ?? priceEntry.unitprice ?? priceEntry.price ?? priceEntry.value)
+    ].filter((entry) => entry !== undefined && entry !== null);
+
+    const stockCandidates = [
+      raw.stock,
+      raw.quantity,
+      raw.amount,
+      raw.available,
+      raw.stockarticle,
+      raw.stockArticle
+    ].filter((entry) => entry !== undefined && entry !== null);
+
+    const rawPrice = toNumber(priceCandidates.length ? priceCandidates[0] : 0);
+    const rawStock = toNumber(stockCandidates.length ? stockCandidates[0] : 0);
+    const price = rawPrice >= 0 ? rawPrice : 0;
+    const stock = rawStock >= 0 ? rawStock : 0;
+
+    const currencySource =
+      raw.currency ??
+      raw.currencyCode ??
+      raw.currencycode ??
+      (priceEntry && (priceEntry.currency ?? priceEntry.currencyCode));
+
+    const currency =
+      typeof currencySource === 'string' && currencySource.trim()
+        ? currencySource.trim()
+        : '';
+
+    const categorySource =
+      raw.category ?? raw.type ?? raw.group ?? raw.articleCategory;
+    const category =
+      typeof categorySource === 'string' && categorySource.trim()
+        ? categorySource.trim()
+        : '';
 
     const allergens = Array.isArray(raw.allergens)
       ? raw.allergens.filter((entry: unknown) => typeof entry === 'string')
       : undefined;
+    const validitySource = raw.validto ?? raw.validTo;
+    let isWithinValidity = true;
+    if (validitySource) {
+      const end = new Date(validitySource);
+      if (Number.isFinite(end.getTime())) {
+        isWithinValidity = end >= new Date();
+      }
+    }
+    const activeFlag = raw.isActive ?? raw.active;
+    const isActive = (activeFlag ?? true) !== false && isWithinValidity;
 
     return {
       id,
       slot,
       name,
-      price: Number.isFinite(priceValue) && priceValue >= 0 ? priceValue : 0,
+      designation,
+      price,
       currency,
-      stock: Number.isFinite(stockValue) && stockValue >= 0 ? stockValue : 0,
+      stock,
       category,
       allergens,
-      isActive: raw.isActive !== false && raw.active !== false
+      isActive
     };
   }
 
@@ -139,34 +221,39 @@ export const useItemsStore = defineStore('items', () => {
           })
           .filter((entry): entry is SnackItem => Boolean(entry));
       } else if (data && typeof data === 'object') {
-        const records: unknown[] = [];
+        const records: Array<{ raw: unknown; sourceKey?: string }> = [];
         const seenArrays = new Set<unknown>();
+        const appendRecord = (raw: unknown, sourceKey?: string) => {
+          if (raw && typeof raw === 'object') {
+            records.push({ raw, sourceKey });
+          }
+        };
 
         const maybeArrayProps = ['results', 'items', 'products'];
         maybeArrayProps.forEach((key) => {
           const value = (data as Record<string, unknown>)[key];
           if (Array.isArray(value) && !seenArrays.has(value)) {
-            records.push(...value);
+            value.forEach((item) => appendRecord(item));
             seenArrays.add(value);
           }
         });
 
         if (!records.length) {
-          Object.values(data as Record<string, unknown>).forEach((value) => {
+          Object.entries(data as Record<string, unknown>).forEach(([key, value]) => {
             if (Array.isArray(value) && !seenArrays.has(value)) {
-              records.push(...value);
+              value.forEach((item) => appendRecord(item));
               seenArrays.add(value);
             } else {
-              records.push(value);
+              appendRecord(value, key);
             }
           });
         }
 
         normalized = records
-          .map((entry, index) => {
-            const normalizedEntry = normalizeProduct(entry);
+          .map(({ raw, sourceKey }, index) => {
+            const normalizedEntry = normalizeProduct(raw, sourceKey);
             if (!normalizedEntry) {
-              logger.warn(`[ItemsStore] Invalid product record ${index}`, entry);
+              logger.warn(`[ItemsStore] Invalid product record ${index}`, raw);
             }
             return normalizedEntry;
           })
