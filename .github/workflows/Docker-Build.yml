@@ -79,7 +79,3 @@ jobs:
 
             CID=$(echo "$RESP" | jq -r '.Id')
             test -n "$CID"
-
-            curl --fail --insecure -sS -X POST \
-              "$PORTAINER_URL/api/endpoints/1/docker/containers/$CID/start" \
-              -H "X-API-Key: $API_KEY"
