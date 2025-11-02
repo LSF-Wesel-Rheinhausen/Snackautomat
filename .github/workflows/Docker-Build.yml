@@ -134,12 +134,13 @@ jobs:
           
           CID=$(echo "$RESP" | jq -r '.Id // empty')
           [ -n "$CID" ] || { echo "Fehler: Keine Container-ID im Create-Response"; echo "$RESP"; exit 1; }
-          
-          # 4) Start (ohne Body – Content-Length: 0 erzwingen)
+          # Start: exakt wie Portainer/Docker-API, ohne Body
           echo "Starte Container …"
           start_resp=$(curl --insecure -s -S -w "\n%{http_code}" -X POST \
             -H "X-API-Key: $API_KEY" \
-            -H "Content-Length: 0" \
+            -H "Content-Type:" \            # explizit entfernen
+            -H "Content-Length: 0" \        # leerer Body erzwungen
+            --http1.1 \                     # verhindert chunked
             "$PORTAINER_URL/api/endpoints/$ENDPOINT_ID/docker/containers/$CID/start")
           start_code="$(printf "%s" "$start_resp" | tail -n1)"
           if [ "$start_code" -ge 400 ]; then
@@ -148,4 +149,5 @@ jobs:
             exit 1
           fi
           echo "Start OK"
+
 
