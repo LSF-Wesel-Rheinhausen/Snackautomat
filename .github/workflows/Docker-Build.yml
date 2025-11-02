@@ -129,7 +129,14 @@ jobs:
               "ExposedPorts": { ($cport + "/tcp"): {} },
               "HostConfig": {
                 "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
-                "Binds": ["/home/runner/token.json:/broker/token.json:ro"],
+                  "Mounts": [
+                              {
+                                "Type": "bind",
+                                "Source": "/home/runner/token.json",
+                                "Target": "/broker/broker/token.json",
+                                "ReadOnly": true
+                              }
+                            ]
                 "RestartPolicy": { "Name": "unless-stopped" }
               }
             }')
