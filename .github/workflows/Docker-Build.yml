@@ -36,8 +36,8 @@ jobs:
           CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
 
           # Host-Dateien (absolute Pfade)
-          CONFIG_PATH: /home/js/snackbroker/data/.env     # z. B. /home/runner/env_prod
-          TOKEN_PATH: /home/js/snackbroker/data/token.json       # z. B. /home/runner/token.json
+          CONFIG_PATH: /home/runner/env_prod     # z. B. /home/runner/env_prod
+          TOKEN_PATH: /home/token.json       # z. B. /home/runner/token.json
 
           # Registry-Creds für Pull (falls Image privat; bei public unschädlich)
           REG_USER: ${{ secrets.DOCKER_USERNAME }}
@@ -55,8 +55,8 @@ jobs:
           command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
           
           # Eingangsprüfungen
-          #[ -f "$CONFIG_PATH" ] || { echo "Fehler: CONFIG_PATH ist keine Datei: $CONFIG_PATH"; exit 1; }
-          #[ -f "$TOKEN_PATH"  ] || { echo "Fehler: TOKEN_PATH ist keine Datei: $TOKEN_PATH"; exit 1; }
+          [ -f "$CONFIG_PATH" ] || { echo "Fehler: CONFIG_PATH ist keine Datei: $CONFIG_PATH"; exit 1; }
+          [ -f "$TOKEN_PATH"  ] || { echo "Fehler: TOKEN_PATH ist keine Datei: $TOKEN_PATH"; exit 1; }
           
           curl_dbg() {
             # curl_dbg METHOD URL [DATA_JSON]
