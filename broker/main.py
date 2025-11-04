@@ -99,7 +99,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logging.info(os.getenv('JWT_SECRET_KEY'))
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=(ensure_ssl_certificates("data/cert.pem","data/key.pem")))
+    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=("data/cert.pem","data/key.pem"))
 
 
 
