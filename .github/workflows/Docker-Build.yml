@@ -37,7 +37,7 @@ jobs:
 
           # Host-Dateien (absolute Pfade)
           CONFIG_PATH: /home/runner/env_prod     # z. B. /home/runner/env_prod
-          TOKEN_PATH: /home/token.json       # z. B. /home/runner/token.json
+          TOKEN_PATH: /home/runner/token.json       # z. B. /home/runner/token.json
 
           # Registry-Creds für Pull (falls Image privat; bei public unschädlich)
           REG_USER: ${{ secrets.DOCKER_USERNAME }}
