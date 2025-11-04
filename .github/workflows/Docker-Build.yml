@@ -48,8 +48,8 @@ jobs:
           HOST_PORT: "8124"
 
           # Zielpfade im Container (ABSOLUT)
-          CONTAINER_ENV_PATH: /broker/.env
-          CONTAINER_TOKEN_PATH: /broker/token.json
+          CONTAINER_ENV_PATH: /broker/data/.env
+          CONTAINER_TOKEN_PATH: /broker/data/token.json
         run: |
           set -euo pipefail
           command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
@@ -129,12 +129,7 @@ jobs:
               "ExposedPorts": { ($cport + "/tcp"): {} },
               "HostConfig": {
                 "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
-                "Mounts": [{
-                                "Type": "bind",
-                                "Source": "/home/runner/data",
-                                "Target": "/broker/broker/data"
-                              }
-                            ],
+                "Binds": ["/home/js/snackbroker/data:/broker/broker/data],
                 "RestartPolicy": { "Name": "unless-stopped" }
               }
             }')
