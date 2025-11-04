@@ -119,15 +119,20 @@ jobs:
           # Container erstellen mit ENV + token.json
           CREATE_PAYLOAD=$(jq -n \
             --arg img "$IMAGE" \
-            --arg tok_bind "${TOKEN_PATH}:${CONTAINER_TOKEN_PATH}:ro" \
             --arg cport "$CONTAINER_PORT" \
             --arg hport "$HOST_PORT" \
             --argjson env "$ENV_ARR" \
             '{
-              "Image": $img,
-              "Env": $env,
-              "ExposedPorts": { ($cport + "/tcp"): {} },
-              "HostConfig": {"PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] }, "Binds": ["/home/js/snackbroker/data:/broker/broker/data], "RestartPolicy": { "Name": "unless-stopped" }}
+              Image: $img,
+              Env: $env,
+              ExposedPorts: { ($cport + "/tcp"): {} },
+              HostConfig: {
+                PortBindings: { ($cport + "/tcp"): [ { HostPort: $hport } ] },
+                Binds: [
+                  "/home/js/snackbroker/data:/broker/broker/data:rw"
+                ],
+                RestartPolicy: { Name: "unless-stopped" }
+              }
             }')
                     
           echo "Erzeuge Container $CONTAINER_NAME …"
