@@ -70,7 +70,7 @@ def get_product():
             return product_details
         return "False"
 
-def ensure_ssl_certificates(cert_filename='cert.pem', key_filename='key.pem'):
+def ensure_ssl_certificates(cert_filename='data/cert.pem', key_filename='data/key.pem'):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     cert_path = os.path.join(base_dir, cert_filename)
     key_path = os.path.join(base_dir, key_filename)
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logging.info(os.getenv('JWT_SECRET_KEY'))
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=('devcert.pem', 'devkey.pem'))
+    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=(ensure_ssl_certificates("data/cert.pem","data/key.pem"))
 
 
 
