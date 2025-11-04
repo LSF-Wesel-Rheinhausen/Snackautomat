@@ -7,7 +7,7 @@ import requests
 import hashlib
 import logging
 
-CACHE_FILE = "shop_items_cache.json"
+CACHE_FILE = "data/shop_items_cache.json"
 CACHE_TTL = 86400  # Cache validity in seconds
 CON_ERROR = "Connection error"
 
@@ -316,7 +316,7 @@ def set_new_sale(buyer, amount, item):
 
 
 def get_user_info(keyname):
-    with open('token.json', 'r') as file:
+    with open('data/token.json', 'r') as file:
         users = json.load(file)
     for user in users:
         for key in user.get('keymanagement', []):
