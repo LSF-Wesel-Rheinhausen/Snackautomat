@@ -96,10 +96,13 @@ def ensure_ssl_certificates(cert_filename='data/cert.pem', key_filename='data/ke
     return cert_path, key_path
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logging.info(os.getenv('JWT_SECRET_KEY'))
+    if FLASK_ENV is True:
+        logging.basicConfig(level=logging.DEBUG)
     #app.run(debug=True, host="0.0.0.0", port=8123)
-    app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=("/broker/broker/data/cert.pem","/broker/broker/data/key.pem"))
+        app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=("data/cert.pem","data/key.pem"))
+    else
+        logging.basicConfig(level=logging.INFO)
+         app.run(debug=False, host="0.0.0.0", port=8124, ssl_context=("data/cert.pem","data/key.pem"))
 
 
 
