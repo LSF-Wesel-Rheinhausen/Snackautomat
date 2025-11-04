@@ -131,9 +131,9 @@ jobs:
                 "PortBindings": { ($cport + "/tcp"): [ { "HostPort": $hport } ] },
                 "Mounts": [{
                                 "Type": "bind",
-                                "Source": "/home/runner/token.json",
-                                "Target": "/broker/broker/token.json",
-                                "ReadOnly": true
+                                "Source": "/home/runner/data",
+                                "Target": "/broker/broker/data",
+                                "ReadOnly": false
                               }
                             ],
                 "RestartPolicy": { "Name": "unless-stopped" }
