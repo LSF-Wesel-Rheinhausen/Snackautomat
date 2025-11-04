@@ -132,8 +132,7 @@ jobs:
                 "Mounts": [{
                                 "Type": "bind",
                                 "Source": "/home/runner/data",
-                                "Target": "/broker/broker/data",
-                                "ReadOnly": false
+                                "Target": "/broker/broker/data"
                               }
                             ],
                 "RestartPolicy": { "Name": "unless-stopped" }
