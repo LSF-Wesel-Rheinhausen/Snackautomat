@@ -36,8 +36,8 @@ jobs:
           CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
 
           # Host-Dateien (absolute Pfade)
-          CONFIG_PATH: ${{ secrets.CONFIG_PATH }}/.env      # z. B. /home/runner/env_prod
-          TOKEN_PATH: ${{ secrets.TOKEN_PATH }}/token.json       # z. B. /home/runner/token.json
+          CONFIG_PATH: /home/js/snackbroker/data/.env     # z. B. /home/runner/env_prod
+          TOKEN_PATH: /home/js/snackbroker/data/token.json       # z. B. /home/runner/token.json
 
           # Registry-Creds für Pull (falls Image privat; bei public unschädlich)
           REG_USER: ${{ secrets.DOCKER_USERNAME }}
@@ -48,8 +48,8 @@ jobs:
           HOST_PORT: "8124"
 
           # Zielpfade im Container (ABSOLUT)
-          CONTAINER_ENV_PATH: /broker/data/.env
-          CONTAINER_TOKEN_PATH: /broker/data/token.json
+          CONTAINER_ENV_PATH: /broker/broker/data/.env
+          CONTAINER_TOKEN_PATH: /broker/broker/data/token.json
         run: |
           set -euo pipefail
           command -v jq >/dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
