@@ -1,0 +1,46 @@
+name: Qodana Code Quality
+
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+    paths:
+      - "broker/**"
+      - "local/backend/**"
+      - "frontend/**"
+      - ".github/workflows/qodana_code_quality.yml"
+  pull_request:
+    paths:
+      - "broker/**"
+      - "local/backend/**"
+      - "frontend/**"
+      - ".github/workflows/qodana_code_quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qodana-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        if: ${{ secrets.QODANA_TOKEN != '' }}
+        uses: JetBrains/qodana-action@v2023.2
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+
+      - name: Skip when token missing
+        if: ${{ secrets.QODANA_TOKEN == '' }}
+        run: echo "QODANA_TOKEN is not configured. Skipping Qodana scan."

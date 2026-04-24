@@ -1,0 +1,74 @@
+name: Test Suite
+
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+    paths:
+      - "frontend/**"
+      - "broker/**/*.py"
+      - "local/backend/**/*.py"
+      - ".github/workflows/test_on_push.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "broker/**/*.py"
+      - "local/backend/**/*.py"
+      - ".github/workflows/test_on_push.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-unit-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  python-smoke-tests:
+    name: Python Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            broker/requirements.txt
+            local/backend/requirements.txt
+
+      - name: Verify Python syntax for broker/local backend
+        run: python -m compileall -q broker local/backend

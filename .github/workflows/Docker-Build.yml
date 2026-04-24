@@ -3,15 +3,23 @@ name: Deploy to Portainer with Self-Hosted Runner
 on:
   push:
     branches:
-      - main  # Setzen Sie hier den Namen Ihres Haupt-Branches ein
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: self-hosted  # Verwenden Sie den selbst gehosteten Runner
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Build Docker image
         run: |
@@ -155,7 +163,6 @@ jobs:
             printf "%s\n" "$start_resp" | sed '$d'; exit 1
           fi
           echo "Start OK"
-
 
 
 
