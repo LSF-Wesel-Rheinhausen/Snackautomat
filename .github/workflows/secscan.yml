@@ -48,7 +48,7 @@ jobs:
           severity: HIGH,CRITICAL
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
 
@@ -73,14 +73,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install bandit pip-audit
 
-      - name: Run Bandit (SARIF)
-        run: bandit -r broker local/backend -f sarif -o bandit-results.sarif
-
-      - name: Upload Bandit scan results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: bandit-results.sarif
+      - name: Run Bandit
+        run: bandit -r broker local/backend -f json -o bandit-results.json
 
       - name: Audit Python dependencies
         run: |
