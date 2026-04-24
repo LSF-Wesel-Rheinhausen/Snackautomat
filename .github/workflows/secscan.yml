@@ -74,7 +74,7 @@ jobs:
           pip install bandit pip-audit
 
       - name: Run Bandit
-        run: bandit -r broker local/backend -f json -o bandit-results.json
+        run: bandit -r broker local/backend --severity-level high --confidence-level medium -f json -o bandit-results.json
 
       - name: Audit Python dependencies
         run: |

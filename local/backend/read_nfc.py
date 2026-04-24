@@ -1,12 +1,19 @@
+import re
 import subprocess
 
+UID_BYTE_PATTERN = re.compile(r"\b[0-9A-Fa-f]{2}\b")
+
 def read_uid():
-    cmd = "nfc-poll | awk '/UID/ {print $3$4$5$6$7$8$9; exit}'"
     result = subprocess.run(
-        cmd,
-        shell=True,
+        ["nfc-poll"],
         capture_output=True,
-        text=True
+        text=True,
+        check=False,
     )
-    uid = result.stdout.strip()
-    return uid or None
+    for line in result.stdout.splitlines():
+        if "UID" not in line:
+            continue
+        uid_bytes = UID_BYTE_PATTERN.findall(line)
+        if uid_bytes:
+            return "".join(uid_bytes).upper()
+    return None

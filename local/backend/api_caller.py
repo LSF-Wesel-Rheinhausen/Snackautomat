@@ -71,7 +71,11 @@ def test_connection():
                 "iat": datetime.datetime.utcnow()
             }
             headers = {"Authorization": f"Bearer {get_jwt_token(payload)}"}
-            response = requests.get(f"{os.environ.get('backendip')}/test", headers=headers, verify=False)
+            response = requests.get(
+                f"{os.environ.get('backendip')}/test",
+                headers=headers,
+                verify=not ignore_self_signed_cert,
+            )
             response.raise_for_status()
             if response.text == "Hello World":
                 return True

@@ -164,4 +164,4 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
     else:
         raise AttributeError("FLASK_ENV environment variable not set to 'production' or 'development'")
-    app.run(debug=True, host="0.0.0.0", port=8124)
+    app.run(debug=app.config.get('DEBUG', False), host="0.0.0.0", port=8124)
