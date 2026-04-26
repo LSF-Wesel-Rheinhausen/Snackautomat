@@ -10,7 +10,12 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['js/**/*.js'],
-      exclude: ['js/scanner.js'] // Separate handling or accept lower over this hardware API
+      thresholds: {
+        statements: 90,
+        branches: 70,
+        functions: 85,
+        lines: 90
+      }
     },
     clearMocks: true
   }

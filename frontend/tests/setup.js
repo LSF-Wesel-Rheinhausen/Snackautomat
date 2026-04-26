@@ -36,7 +36,8 @@ Object.defineProperty(globalThis.crypto, 'randomUUID', {
     configurable: true
 });
 
-document.body.innerHTML = `
+globalThis.resetSnackautomatDom = () => {
+    document.body.innerHTML = `
     <div id="install-auth-screen" class="hidden">
         <input id="install-auth-password" />
         <button id="install-auth-btn"></button>
@@ -89,8 +90,8 @@ document.body.innerHTML = `
                 <button id="admin-export-btn"></button>
                 <button id="admin-clear-bookings-btn"></button>
                 <button id="admin-logout-btn"></button>
-                <tbody id="admin-snack-tbody"></tbody>
-                <tbody id="admin-drink-tbody"></tbody>
+                <table><tbody id="admin-snack-tbody"></tbody></table>
+                <table><tbody id="admin-drink-tbody"></tbody></table>
                 <input id="admin-new-drink-name" />
                 <input id="admin-new-drink-price" />
                 <button id="admin-add-drink-btn"></button>
@@ -99,3 +100,6 @@ document.body.innerHTML = `
         </section>
     </div>
 `;
+};
+
+resetSnackautomatDom();

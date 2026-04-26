@@ -26,6 +26,9 @@ const SnacksView = (() => {
     }
 
     function render(snacks = Store.getSnacks()) {
+        if (!container || !document.body.contains(container)) {
+            container = document.getElementById('snacks-grid');
+        }
         container.innerHTML = '';
 
         snacks.forEach((snack, index) => {

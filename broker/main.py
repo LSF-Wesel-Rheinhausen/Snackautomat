@@ -68,7 +68,7 @@ def get_product():
     for product_id, product_details in valid_products.items():
         if f'[{row}]' in product_details.get('designation', ''):
             return product_details
-        return "False"
+    return "False"
 
 def ensure_ssl_certificates(cert_filename='data/cert.pem', key_filename='data/key.pem'):
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -105,5 +105,4 @@ if __name__ == '__main__':
         port=8124,
         ssl_context=("data/cert.pem", "data/key.pem"),
     )
-
 

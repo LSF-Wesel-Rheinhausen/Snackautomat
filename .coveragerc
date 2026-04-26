@@ -1,0 +1,5 @@
+[run]
+omit =
+    local/backend/frontend.py
+    */__init__.py
+    */login.py

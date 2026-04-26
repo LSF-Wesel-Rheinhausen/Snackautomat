@@ -12,6 +12,7 @@ describe('ApiService Module', () => {
         vi.clearAllMocks();
         localStorage.clear();
         sessionStorage.clear();
+        resetSnackautomatDom();
         Store.init();
         Store.setApiConfig('http://localhost:8124', 'test-valid-jwt.token.value');
     });
@@ -42,6 +43,47 @@ describe('ApiService Module', () => {
             fetch.mockRejectedValueOnce(new Error('Network Error'));
             const snacks = await ApiService.getFilteredSnacks();
             expect(snacks).toEqual([]);
+        });
+
+        it('should trim trailing API URL slashes and send authorization headers', async () => {
+            Store.setApiConfig('http://localhost:8124///', 'jwt-token');
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({})
+            });
+
+            await ApiService.getFilteredSnacks();
+
+            expect(fetch).toHaveBeenCalledWith(
+                'http://localhost:8124/getValidFUProducts',
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        Authorization: 'Bearer jwt-token',
+                        'Content-Type': 'application/json'
+                    })
+                })
+            );
+        });
+
+        it('should ignore invalid row ids and fallback invalid prices to zero', async () => {
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    'bad-low': { designation: '[0] Too low', price_member: 9 },
+                    'bad-high': { designation: '[13] Too high', price_member: 9 },
+                    'bad-price': { designation: '[2] Broken price', prices: [{ price: 'abc' }] }
+                })
+            });
+
+            const snacks = await ApiService.getFilteredSnacks();
+            expect(snacks[0]).toMatchObject({ id: 1, name: 'Leer', price: 0 });
+            expect(snacks[1]).toMatchObject({ id: 2, name: 'Broken price', price: 0 });
+            expect(snacks[11]).toMatchObject({ id: 12, name: 'Leer', price: 0 });
+        });
+
+        it('should throw API_NOT_CONFIGURED when called without config through booking path', async () => {
+            localStorage.clear();
+            await expect(ApiService.buyProduct('1', '2')).rejects.toThrow('API_NOT_CONFIGURED');
         });
     });
 

@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, request, jsonify
+from flask import Flask, abort, request, jsonify
 from flask_cors import CORS
 import worker
 import flask
@@ -79,8 +79,8 @@ def api_wifi_list():
 
     try:
         networks = wifi_manager.list_wifi()
-    except ConnectionError as e:
-        os.abort(503, description=str(e))
+    except Exception as e:
+        abort(503, description=str(e))
 
     if refresh:
         # aktiven Rescan triggern und erneut lesen
@@ -88,7 +88,7 @@ def api_wifi_list():
         try:
             iface = wifi_manager.detect_wifi_iface()
             run(f"nmcli device wifi rescan ifname {iface}")
-            networks = wifi_manager.detect_wifi_iface(iface)
+            networks = wifi_manager.list_wifi(iface)
         except Exception:
             pass
 
@@ -121,18 +121,18 @@ def api_wifi_connect():
     hidden = bool(data.get("hidden", False))
 
     if not isinstance(ssid, str) or not ssid.strip():
-        os.abort(400, description="ssid fehlt oder ist leer")
+        abort(400, description="ssid fehlt oder ist leer")
     if not isinstance(password, str) or not password:
-        os.abort(400, description="password fehlt oder ist leer")
+        abort(400, description="password fehlt oder ist leer")
     if bssid is not None and not isinstance(bssid, str):
-        os.abort(400, description="bssid muss String sein")
+        abort(400, description="bssid muss String sein")
     if iface is not None and not isinstance(iface, str):
-        os.abort(400, description="iface muss String sein")
+        abort(400, description="iface muss String sein")
 
     try:
         used_iface = wifi_manager.wifi_connect(ssid=ssid.strip(), password=password, iface=iface, bssid=bssid, hidden=hidden)
-    except ConnectionError as e:
-        os.abort(502, description=str(e))
+    except Exception as e:
+        abort(502, description=str(e))
 
     return jsonify({
         "status": "connected",
