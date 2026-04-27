@@ -1,12 +1,12 @@
 import subprocess
 
 def read_uid():
-    cmd = "nfc-poll | awk '/UID/ {print $3$4$5$6$7$8$9; exit}'"
-    result = subprocess.run(
-        cmd,
-        shell=True,
-        capture_output=True,
-        text=True
-    )
-    uid = result.stdout.strip()
-    return uid or None
+    """Read an NFC UID in a shell-safe way from nfc-poll output."""
+    result = subprocess.run(["nfc-poll"], capture_output=True, text=True, check=False)
+    for line in result.stdout.splitlines():
+        if "UID" not in line:
+            continue
+        uid = "".join(part for part in line.split()[1:] if part.isalnum())
+        if uid:
+            return uid
+    return None

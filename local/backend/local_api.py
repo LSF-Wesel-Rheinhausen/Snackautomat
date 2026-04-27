@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort, Response
 from flask_cors import CORS
 import worker
 import flask
@@ -14,11 +14,14 @@ load_dotenv()
 
 @app.route('/buy', methods=['POST'])
 def run_worker():
-    data = flask.request.get_json()
+    """Run one vending turn and book the resulting sale in the broker."""
+    data = flask.request.get_json(silent=True) or {}
     row = data.get('row')
     memberid = data.get('memberid')
+    if not isinstance(row, (str, int)):
+        return {"error": "row must be a string or integer"}, 400
     try:
-        if worker.run(row) is True: # Call the worker function
+        if worker.run(str(row)) is True: # Call the worker function
             api_caller.set_new_sale(memberid=memberid, itemid=row, amount=1)
             return {"message": f"{row} processed successfully"}, 200
         else:
@@ -38,6 +41,7 @@ def run_worker():
 
 @app.route('/get_product_list', methods=['GET'])
 def get_products():
+    """Fetch currently valid products from broker service."""
     try:
         products = api_caller.get_valid_products()
         return products, 200
@@ -48,6 +52,7 @@ def get_products():
 
 @app.route('/get_user_info', methods=['GET'])
 def login():
+    """Read NFC and return matching user data from broker service."""
     nfc_id = read_nfc.read_uid()
     if nfc_id:
         rfid = nfc_id.upper()
@@ -57,13 +62,14 @@ def login():
             return user_info, 200
         except Exception as e:
             logging.debug(f"Error getting user info for RFID {rfid}: {e}")
-            return {f'error": User  for RFID {rfid} not found'}, 500
+            return {"error": f"User for RFID {rfid} not found"}, 500
     else:
         return jsonify({"error": "Failed to read NFC tag"}), 500
 
 
 @app.route('/health', methods=['GET'])
 def health_check():
+    """Basic readiness check for environment and broker connectivity."""
     if os.getenv('FLASK_ENV') not in ['production', 'development']:
         return {"status": "error", "message": "FLASK_ENV not set correctly"}, 500
     if api_caller.test_connection() is False:
@@ -73,22 +79,23 @@ def health_check():
 
 @app.route("/wifi/list", methods=['GET'])
 def api_wifi_list():
+    """List Wi-Fi networks via NetworkManager with optional filtering."""
     refresh = request.args.get("refresh") in {"1", "true", "yes"}
     min_signal = request.args.get("min_signal", type=int)
     limit = request.args.get("limit", type=int)
 
     try:
         networks = wifi_manager.list_wifi()
-    except ConnectionError as e:
-        os.abort(503, description=str(e))
+    except wifi_manager.WifiError as e:
+        abort(503, description=str(e))
 
     if refresh:
         # aktiven Rescan triggern und erneut lesen
         from wifi_manager import run
         try:
             iface = wifi_manager.detect_wifi_iface()
-            run(f"nmcli device wifi rescan ifname {iface}")
-            networks = wifi_manager.detect_wifi_iface(iface)
+            run(["nmcli", "device", "wifi", "rescan", "ifname", iface])
+            networks = wifi_manager.list_wifi(iface=iface)
         except Exception:
             pass
 
@@ -121,18 +128,18 @@ def api_wifi_connect():
     hidden = bool(data.get("hidden", False))
 
     if not isinstance(ssid, str) or not ssid.strip():
-        os.abort(400, description="ssid fehlt oder ist leer")
+        abort(400, description="ssid fehlt oder ist leer")
     if not isinstance(password, str) or not password:
-        os.abort(400, description="password fehlt oder ist leer")
+        abort(400, description="password fehlt oder ist leer")
     if bssid is not None and not isinstance(bssid, str):
-        os.abort(400, description="bssid muss String sein")
+        abort(400, description="bssid muss String sein")
     if iface is not None and not isinstance(iface, str):
-        os.abort(400, description="iface muss String sein")
+        abort(400, description="iface muss String sein")
 
     try:
         used_iface = wifi_manager.wifi_connect(ssid=ssid.strip(), password=password, iface=iface, bssid=bssid, hidden=hidden)
-    except ConnectionError as e:
-        os.abort(502, description=str(e))
+    except wifi_manager.WifiError as e:
+        abort(502, description=str(e))
 
     return jsonify({
         "status": "connected",
@@ -144,15 +151,60 @@ def api_wifi_connect():
 
 @app.route("/ota", methods=['GET'])
 def ota_update():
+    """Placeholder route until OTA update flow is implemented."""
+    return {"status": "not_implemented", "message": "OTA update is not implemented yet"}, 501
+
+
+@app.route("/admin/sales_backend_mode", methods=["GET"])
+def get_sales_backend_mode():
+    """Expose current broker sales backend mode for admin frontend."""
     try:
-        #TODO: Implement OTA update logic
-        if worker is True:
-            return {"message": "OTA update successful"}, 200
-        else:
-            return {"message": "OTA update failed"}, 500
-    except Exception as e:
-        logging.debug(f"Error during OTA update: {e}")
-        return {"error": str(e)}, 500
+        return api_caller.get_sales_backend_mode(), 200
+    except Exception as exc:
+        return {"error": str(exc)}, 502
+
+
+@app.route("/admin/sales_backend_mode", methods=["PUT"])
+def set_sales_backend_mode():
+    """Update broker sales backend mode from admin frontend."""
+    data = request.get_json(silent=True) or {}
+    mode = data.get("mode")
+    if not isinstance(mode, str):
+        return {"error": "mode fehlt oder ist ungültig"}, 400
+    try:
+        return api_caller.set_sales_backend_mode(mode=mode), 200
+    except Exception as exc:
+        return {"error": str(exc)}, 502
+
+
+@app.route("/orders/export", methods=["GET"])
+def export_orders():
+    """Proxy order export from broker to local web interface clients."""
+    output_format = request.args.get("format", default="json", type=str)
+    from_date = request.args.get("from", type=str)
+    to_date = request.args.get("to", type=str)
+    memberid = request.args.get("memberid", type=str)
+    try:
+        response = api_caller.export_orders(
+            output_format=output_format,
+            from_date=from_date,
+            to_date=to_date,
+            memberid=memberid,
+        )
+    except Exception as exc:
+        return {"error": str(exc)}, 502
+
+    headers = {}
+    content_disposition = response.headers.get("Content-Disposition")
+    if content_disposition:
+        headers["Content-Disposition"] = content_disposition
+
+    return Response(
+        response.content,
+        status=response.status_code,
+        mimetype=response.headers.get("Content-Type", "application/octet-stream"),
+        headers=headers,
+    )
 
 
 if __name__ == '__main__':
@@ -164,4 +216,4 @@ if __name__ == '__main__':
         logging.basicConfig(level=logging.DEBUG)
     else:
         raise AttributeError("FLASK_ENV environment variable not set to 'production' or 'development'")
-    app.run(debug=True, host="0.0.0.0", port=8124)
+    app.run(debug=app.config['DEBUG'], host="0.0.0.0", port=8124)

@@ -1,11 +1,12 @@
 import subprocess
-import shlex
 
 class WifiError(RuntimeError):
+    """Raised when a Wi-Fi shell command exits non-zero."""
     pass
 
-def run(cmd: str) -> str:
-    proc = subprocess.run(shlex.split(cmd), text=True, capture_output=True)
+def run(args: list[str]) -> str:
+    """Run a NetworkManager command and return stdout text."""
+    proc = subprocess.run(args, text=True, capture_output=True)
     if proc.returncode != 0:
         raise WifiError((proc.stderr or proc.stdout).strip())
     return proc.stdout.strip()
@@ -16,7 +17,7 @@ def detect_wifi_iface() -> str:
     Präferenz: verbunden > getrennt aber verfügbar.
     """
     # nmcli device status: DEVICE  TYPE  STATE  CONNECTION
-    out = run("nmcli -t -f DEVICE,TYPE,STATE device status")
+    out = run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "device", "status"])
     candidates = []
     for line in out.splitlines():
         parts = line.split(":")
@@ -42,7 +43,7 @@ def list_wifi(iface: str | None = None):
     """
     iface = iface or detect_wifi_iface()
     # -t = tabellarisch, Felder: IN-USE,SSID,BSSID,SIGNAL,SECURITY
-    out = run(f"nmcli -t -f IN-USE,SSID,BSSID,SIGNAL,SECURITY device wifi list ifname {iface}")
+    out = run(["nmcli", "-t", "-f", "IN-USE,SSID,BSSID,SIGNAL,SECURITY", "device", "wifi", "list", "ifname", iface])
     nets = []
     for line in out.splitlines():
         parts = (line.split(":", maxsplit=4) + ["", "", "", "", ""])[:5]
@@ -58,17 +59,25 @@ def list_wifi(iface: str | None = None):
         })
     return nets
 
-def wifi_connect(ssid: str, password: str, iface: str | None = None, bssid: str | None = None):
+def wifi_connect(
+    ssid: str,
+    password: str,
+    iface: str | None = None,
+    bssid: str | None = None,
+    hidden: bool = False
+):
     """
     Verbindet mit SSID. Optional BSSID pinnen.
     Legt das Profil an oder aktualisiert es.
     """
     iface = iface or detect_wifi_iface()
-    args = f'nmcli device wifi connect "{ssid}" password "{password}" ifname {iface}'
+    args = ["nmcli", "device", "wifi", "connect", ssid, "password", password, "ifname", iface]
     if bssid:
-        args += f" bssid {bssid}"
+        args.extend(["bssid", bssid])
+    if hidden:
+        args.extend(["hidden", "yes"])
     run(args)
-    return True
+    return iface
 
 def wifi_forget(ssid: str):
     """
@@ -76,7 +85,7 @@ def wifi_forget(ssid: str):
     Ignoriert, falls nicht vorhanden.
     """
     try:
-        run(f'nmcli connection delete "{ssid}"')
+        run(["nmcli", "connection", "delete", ssid])
     except WifiError as e:
         msg = str(e).lower()
         if "unknown connection" in msg or "not found" in msg:

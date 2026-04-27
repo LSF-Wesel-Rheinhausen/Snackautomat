@@ -6,12 +6,18 @@ import os
 import requests
 import hashlib
 import logging
+try:
+    from . import orders_db
+except ImportError:  # pragma: no cover - fallback for script execution
+    import orders_db
 
 CACHE_FILE = "data/shop_items_cache.json"
 CACHE_TTL = 86400  # Cache validity in seconds
 CON_ERROR = "Connection error"
+REQUEST_TIMEOUT_SECONDS = 10
 
 def get_shop_items_cached():
+    """Return shop items from file cache when valid, otherwise refresh from API."""
     # Check if cache file exists and is still valid
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, "r") as f:
@@ -51,7 +57,8 @@ def get_access_token():
         str: The access token if the request is successful.
         """
     url = _api_url + "interface/rest/auth/accesstoken"
-    response = requests.get(url)
+    response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
+    response.raise_for_status()
     data = response.json()
     return data.get("accesstoken")
 
@@ -61,10 +68,6 @@ _api_username = os.environ.get("API_USERNAME")
 _api_password = os.environ.get("API_PASSWORD")
 _api_url = os.environ.get("API_URL")
 _api_cid = os.environ.get("API_CID")
-
-
-def test():
-    print(_api_token)
 
 
 def login():
@@ -100,11 +103,8 @@ def login():
         "cid": _api_cid,
         #"auth_secret": auth_secret
     }
-    logging.debug('Password: ')
-    logging.debug(password)
     logging.debug('Accesstoken: ' + str(accesstoken))
-    logging.debug(json.dumps(payload, indent=4))
-    response = requests.post(url, data=json.dumps(payload))
+    response = requests.post(url, data=json.dumps(payload), timeout=REQUEST_TIMEOUT_SECONDS)
     logging.debug(response.text)
     if response.status_code == 200:
         return accesstoken
@@ -135,7 +135,7 @@ def get_vfid(vname, nname):
         payload = {
             'accesstoken': accesstoken,
         }
-        response = requests.post(url, data=json.dumps(payload))
+        response = requests.post(url, data=json.dumps(payload), timeout=REQUEST_TIMEOUT_SECONDS)
         logging.debug(json.dumps(response.json(), indent=4))
         if response.status_code != 200:
             raise ConnectionError("Server returned " + str(response.status_code))
@@ -191,7 +191,7 @@ def get_shop_items():
         payload = {
             'accesstoken': accesstoken,
         }
-        response = requests.post(url, data=json.dumps(payload))
+        response = requests.post(url, data=json.dumps(payload), timeout=REQUEST_TIMEOUT_SECONDS)
         if response.status_code != 200:
             raise ConnectionError("Server returned " + str(response.status_code))
         else:
@@ -201,6 +201,7 @@ def get_shop_items():
         return CON_ERROR
 
 def get_fu_products():
+    """Return products where articleid starts with 'Snackautomat Reihe '."""
     articles = get_shop_items_cached()
     prefix="Snackautomat Reihe "
     filtered_articles = {
@@ -292,6 +293,7 @@ def get_valid_fu_products():
 
 
 def set_new_sale(buyer, amount, item):
+    """Create a sale booking for a buyer and an item."""
     url = _api_url + "interface/rest/sale/add"
     logging.info('setting shop buy...')
     try:
@@ -305,7 +307,7 @@ def set_new_sale(buyer, amount, item):
             'comment': "Automatisch gebucht",
         }
         logging.debug(json.dumps(payload, indent=4))
-        response = requests.post(url, data=json.dumps(payload))
+        response = requests.post(url, data=json.dumps(payload), timeout=REQUEST_TIMEOUT_SECONDS)
         if response.status_code != 200:
             raise ConnectionError("Server returned " + str(response.status_code))
         else:
@@ -315,7 +317,83 @@ def set_new_sale(buyer, amount, item):
         return CON_ERROR
 
 
+def get_sales_backend_mode() -> str:
+    """Return configured sales backend mode ('vereinsflieger' or 'local_db')."""
+    return orders_db.get_sales_backend_mode()
+
+
+def set_sales_backend_mode(mode: str) -> str:
+    """Persist sales backend mode and return normalized value."""
+    return orders_db.set_sales_backend_mode(mode)
+
+
+def export_orders(*, output_format: str, from_date: str | None = None, to_date: str | None = None, memberid: str | None = None):
+    """
+    Export locally persisted machine orders as JSON or CSV.
+
+    Returns:
+        tuple: (content, mimetype)
+    """
+    orders = orders_db.list_orders(from_date=from_date, to_date=to_date, memberid=memberid)
+    if output_format == "json":
+        return json.dumps(orders, ensure_ascii=False), "application/json"
+    if output_format == "csv":
+        return orders_db.orders_to_csv(orders), "text/csv"
+    raise ValueError("output_format must be 'json' or 'csv'")
+
+
+def process_sale(buyer, amount, item):
+    """
+    Process one machine sale according to configured backend mode.
+
+    In `vereinsflieger` mode a real Vereinsflieger booking is executed.
+    In `local_db` mode the order is only persisted locally.
+    """
+    mode = get_sales_backend_mode()
+    normalized_amount = int(amount)
+    memberid = str(buyer["memberid"])
+    itemid = str(item.get("id", item.get("articleid", "")))
+    articleid = str(item.get("articleid", ""))
+    bookingdate = datetime.now().date().isoformat()
+
+    if mode == "vereinsflieger":
+        response = set_new_sale(buyer=buyer, amount=normalized_amount, item=item)
+        if response == CON_ERROR:
+            return response
+        orders_db.record_order(
+            source="vereinsflieger",
+            memberid=memberid,
+            itemid=itemid,
+            articleid=articleid,
+            amount=normalized_amount,
+            bookingdate=bookingdate,
+            vf_response=response if isinstance(response, dict) else {"response": response},
+        )
+        return response
+
+    local_response = {
+        "status": "stored_locally",
+        "memberid": memberid,
+        "itemid": itemid,
+        "articleid": articleid,
+        "amount": normalized_amount,
+        "bookingdate": bookingdate,
+    }
+    order_id = orders_db.record_order(
+        source="local_db",
+        memberid=memberid,
+        itemid=itemid,
+        articleid=articleid,
+        amount=normalized_amount,
+        bookingdate=bookingdate,
+        vf_response=None,
+    )
+    local_response["order_id"] = order_id
+    return local_response
+
+
 def get_user_info(keyname):
+    """Return a user matching RFID keyname from local token file."""
     with open('data/token.json', 'r') as file:
         users = json.load(file)
     for user in users:
