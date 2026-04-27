@@ -170,7 +170,7 @@ body {
 
 .product-card__button {
     background: rgba(56, 189, 248, 0.18);
-    color: var(--accent-contrast);
+    color: var(--text-primary);
     border: 1px dashed rgba(56, 189, 248, 0.5);
     border-radius: 0.75rem;
     padding: 0.75rem;
