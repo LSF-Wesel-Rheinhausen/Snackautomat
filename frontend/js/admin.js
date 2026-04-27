@@ -46,9 +46,7 @@ const AdminView = (() => {
     }
 
     function handleLogout() {
-        isAuthenticated = false;
-        document.getElementById('admin-login-section').classList.remove('hidden');
-        document.getElementById('admin-content-section').classList.add('hidden');
+        resetAuth();
     }
 
     function renderAdminContent() {
@@ -365,13 +363,21 @@ const AdminView = (() => {
         return text.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    function resetAuth() {
+        isAuthenticated = false;
+        document.getElementById('admin-pin-input').value = '';
+        document.getElementById('admin-login-error').textContent = '';
+        document.getElementById('admin-login-section').classList.remove('hidden');
+        document.getElementById('admin-content-section').classList.add('hidden');
+    }
+
     function show() {
         if (isAuthenticated) {
             renderAdminContent();
         }
     }
 
-    return { init, show };
+    return { init, show, resetAuth };
 })();
 
 // Export for Node.js testing

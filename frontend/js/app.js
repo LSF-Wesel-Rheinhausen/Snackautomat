@@ -123,6 +123,9 @@ const App = (() => {
 
     function handleUserLogout() {
         Store.logoutUser();
+        if (typeof AdminView.resetAuth === 'function') {
+            AdminView.resetAuth();
+        }
         showLoginScreen();
     }
 
