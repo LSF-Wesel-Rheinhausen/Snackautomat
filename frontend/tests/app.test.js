@@ -7,7 +7,7 @@ window.Store = Store;
 
 globalThis.SnacksView = { init: vi.fn(), render: vi.fn() };
 globalThis.DrinksView = { init: vi.fn(), render: vi.fn() };
-globalThis.AdminView = { init: vi.fn(), show: vi.fn() };
+globalThis.AdminView = { init: vi.fn(), show: vi.fn(), resetAuth: vi.fn() };
 globalThis.ScannerService = { setOnScanCallback: vi.fn() };
 globalThis.ApiService = { getUserInfo: vi.fn() };
 Object.assign(global, {
@@ -133,6 +133,7 @@ describe('App', () => {
 
         document.getElementById('user-logout-btn').click();
         expect(Store.getCurrentUser()).toBeNull();
+        expect(AdminView.resetAuth).toHaveBeenCalledTimes(1);
         expect(document.getElementById('user-login-screen').classList.contains('hidden')).toBe(false);
     });
 
