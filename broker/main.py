@@ -68,7 +68,7 @@ def get_product():
     for product_id, product_details in valid_products.items():
         if f'[{row}]' in product_details.get('designation', ''):
             return product_details
-        return "False"
+    return "False"
 
 def ensure_ssl_certificates(cert_filename='data/cert.pem', key_filename='data/key.pem'):
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -96,13 +96,13 @@ def ensure_ssl_certificates(cert_filename='data/cert.pem', key_filename='data/ke
     return cert_path, key_path
 
 if __name__ == '__main__':
-    if app.config['FLASK_ENV'] is True:
-        logging.basicConfig(level=logging.DEBUG)
-    #app.run(debug=True, host="0.0.0.0", port=8123)
-        app.run(debug=True, host="0.0.0.0", port=8124, ssl_context=("data/cert.pem","data/key.pem"))
-    else:
-        logging.basicConfig(level=logging.INFO)
-        app.run(debug=False, host="0.0.0.0", port=8124, ssl_context=("data/cert.pem","data/key.pem"))
-
-
+    flask_env = os.getenv("FLASK_ENV", "production").lower()
+    is_development = flask_env == "development"
+    logging.basicConfig(level=logging.DEBUG if is_development else logging.INFO)
+    app.run(
+        debug=is_development,
+        host="0.0.0.0",
+        port=8124,
+        ssl_context=("data/cert.pem", "data/key.pem"),
+    )
 

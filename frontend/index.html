@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Snackautomat – Snacks und Getränke buchen, Produkte verwalten und Buchungen exportieren.">
+    <title>Snackautomat</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- ============ FIRST-RUN AUTHENTICATION ============ -->
+    <div id="install-auth-screen" class="setup-screen hidden">
+        <div class="login-card setup-card">
+            <div class="login-card__icon">🔒</div>
+            <h1 class="login-card__title">Sicherheitsabfrage</h1>
+            <p class="login-card__subtitle">Bitte gib das Installationspasswort ein, um die Ersteinrichtung zu starten.</p>
+            
+            <div class="form-group" style="margin-top: var(--space-md);">
+                <label for="install-auth-password">Installationspasswort</label>
+                <input type="password" id="install-auth-password" placeholder="Passwort eingeben...">
+            </div>
+
+            <button class="btn btn--primary" id="install-auth-btn" style="width:100%; margin-top: var(--space-md);">
+                Bestätigen
+            </button>
+            <p class="form-error" id="install-auth-error" role="alert" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <!-- ============ FIRST-RUN SETUP SCREEN ============ -->
+    <div id="setup-screen" class="setup-screen hidden">
+        <div class="login-card setup-card">
+            <div class="login-card__icon">⚙️</div>
+            <h1 class="login-card__title">Ersteinrichtung</h1>
+            <p class="login-card__subtitle">Bitte konfiguriere den Snackautomaten für den ersten Start.</p>
+            
+            <div class="form-group" style="margin-top: var(--space-md);">
+                <label for="setup-api-url">Broker API URL</label>
+                <input type="text" id="setup-api-url" placeholder="http://localhost:8124">
+            </div>
+            
+            <div class="form-group" style="margin-top: var(--space-sm);">
+                <label for="setup-api-jwt">Statistischer JWT-Token (Admin)</label>
+                <input type="password" id="setup-api-jwt" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+            </div>
+
+            <div class="form-group" style="margin-top: var(--space-sm);">
+                <label for="setup-admin-pin">Neue Admin PIN vergeben</label>
+                <input type="password" id="setup-admin-pin" placeholder="Mindestens 4 Ziffern" maxlength="10">
+                <small class="text-muted" style="display:block; margin-top:4px;">Diese PIN benötigst du später für Administrator-Einstellungen.</small>
+            </div>
+
+            <div class="form-group hidden" id="setup-install-password-group" style="margin-top: var(--space-sm);">
+                <label for="setup-install-password">Installationspasswort festlegen</label>
+                <input type="password" id="setup-install-password" placeholder="Mindestens 8 Zeichen">
+                <small class="text-muted" style="display:block; margin-top:4px;">Dieses Passwort schützt spätere Neu-Konfigurationen.</small>
+            </div>
+
+            <button class="btn btn--primary" id="setup-start-btn" style="width:100%; margin-top: var(--space-md);">
+                Einrichtung abschließen & Starten
+            </button>
+            <p class="form-error" id="setup-error" role="alert" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <!-- ============ USER LOGIN SCREEN ============ -->
+    <div id="user-login-screen" class="login-screen">
+        <div class="login-card">
+            <div class="login-card__icon">🍿</div>
+            <h1 class="login-card__title">Snackautomat</h1>
+            <p class="login-card__subtitle">Bitte melde dich an, um fortzufahren.</p>
+            <div class="form-group">
+                <label for="user-firstname">Vorname</label>
+                <input type="text" id="user-firstname" placeholder="Vorname" autocomplete="given-name"
+                    aria-label="Vorname eingeben">
+            </div>
+            <div class="form-group" style="margin-top: var(--space-sm);">
+                <label for="user-lastname">Nachname</label>
+                <input type="text" id="user-lastname" placeholder="Nachname" autocomplete="family-name"
+                    aria-label="Nachname eingeben">
+            </div>
+            <button class="btn btn--primary" id="user-login-btn" style="width:100%; margin-top: var(--space-md);">
+                Anmelden
+            </button>
+            <p class="form-error" id="user-login-error" role="alert" aria-live="polite"></p>
+        </div>
+    </div>
+
+    <!-- ============ MAIN APPLICATION (hidden until login) ============ -->
+    <div id="main-app" class="hidden">
+
+        <!-- Header & Navigation -->
+        <header class="header">
+            <div class="header__inner">
+                <h1 class="header__title">
+                    <span class="header__title-icon">🍿</span>
+                    Snackautomat
+                </h1>
+                <nav class="nav" role="tablist" aria-label="Hauptnavigation">
+                    <button class="nav__tab nav__tab--active" data-tab="snacks" role="tab" aria-selected="true"
+                        aria-controls="view-snacks" id="tab-snacks">
+                        🍫 Snacks
+                    </button>
+                    <button class="nav__tab" data-tab="drinks" role="tab" aria-selected="false"
+                        aria-controls="view-drinks" id="tab-drinks">
+                        🥤 Getränke
+                    </button>
+                    <button class="nav__tab" data-tab="admin" role="tab" aria-selected="false"
+                        aria-controls="view-admin" id="tab-admin">
+                        ⚙️ Admin
+                    </button>
+                </nav>
+                <div class="user-info">
+                    <span class="user-info__label">👤 <span id="user-display-name"></span></span>
+                    <button class="btn btn--outline btn--small" id="user-logout-btn" aria-label="Abmelden">
+                        Abmelden
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+
+            <!-- === SNACKS VIEW === -->
+            <section id="view-snacks" class="view-section" role="tabpanel" aria-labelledby="tab-snacks">
+                <div class="view-header">
+                    <h2>Snacks auswählen</h2>
+                    <p>Wähle einen Snack aus einer der 12 Reihen, um eine Buchung zu erstellen.</p>
+                </div>
+                <div id="snacks-grid" class="product-grid" aria-label="Snack-Reihen">
+                    <!-- Filled by snacks.js -->
+                </div>
+            </section>
+
+            <!-- === DRINKS VIEW === -->
+            <section id="view-drinks" class="view-section hidden" role="tabpanel" aria-labelledby="tab-drinks"
+                aria-hidden="true">
+                <div class="view-header">
+                    <h2>Getränke buchen</h2>
+                    <p>Hier kannst du Getränke buchen. <strong>Hinweis:</strong> Es handelt sich nur um eine Buchung –
+                        die Ausgabe erfolgt separat.</p>
+                </div>
+                <div id="drinks-grid" class="product-grid" aria-label="Getränkeliste">
+                    <!-- Filled by drinks.js -->
+                </div>
+            </section>
+
+            <!-- === ADMIN VIEW === -->
+            <section id="view-admin" class="view-section hidden" role="tabpanel" aria-labelledby="tab-admin"
+                aria-hidden="true">
+                <div class="view-header">
+                    <h2>Administration</h2>
+                    <p>Produkte und Preise verwalten, Buchungen einsehen und exportieren.</p>
+                </div>
+
+                <!-- Admin Login -->
+                <div id="admin-login-section" class="admin-login">
+                    <div class="admin-login__icon">🔒</div>
+                    <h3>Admin-Zugang</h3>
+                    <div class="form-group">
+                        <label for="admin-pin-input">PIN eingeben</label>
+                        <input type="password" id="admin-pin-input" placeholder="PIN" maxlength="10" autocomplete="off"
+                            aria-label="Admin-PIN eingeben">
+                    </div>
+                    <button class="btn btn--primary" id="admin-login-btn" style="width:100%;">
+                        Anmelden
+                    </button>
+                    <p class="form-error" id="admin-login-error" role="alert" aria-live="polite"></p>
+                </div>
+
+                <!-- Admin Content (hidden until login) -->
+                <div id="admin-content-section" class="hidden">
+
+                    <!-- Toolbar -->
+                    <div class="admin-toolbar">
+                        <button class="btn btn--primary" id="admin-save-btn">
+                            💾 Änderungen speichern
+                        </button>
+                        <button class="btn btn--outline" id="admin-export-btn">
+                            📥 Buchungen exportieren (CSV)
+                        </button>
+                        <button class="btn btn--danger" id="admin-clear-bookings-btn">
+                            🗑️ Buchungen löschen
+                        </button>
+                        <button class="btn btn--outline" id="admin-logout-btn" style="margin-left:auto;">
+                            🔓 Abmelden
+                        </button>
+                    </div>
+
+                    <!-- API Configuration -->
+                    <div class="admin-panel" id="admin-api-panel">
+                        <div class="admin-panel__header">
+                            <h3>⚙️ API Einstellungen</h3>
+                        </div>
+                        <div class="admin-panel__body" style="display: flex; gap: var(--space-md); flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 1; min-width: 250px;">
+                                <label for="admin-api-url">Broker API URL</label>
+                                <input type="text" id="admin-api-url" placeholder="https://localhost:8124">
+                            </div>
+                            <div class="form-group" style="flex: 2; min-width: 300px;">
+                                <label for="admin-api-jwt">Statistischer JWT-Token</label>
+                                <input type="password" id="admin-api-jwt" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 220px;">
+                                <label for="admin-new-pin">Neue Admin-PIN (optional)</label>
+                                <input type="password" id="admin-new-pin" placeholder="4-10 Ziffern" maxlength="10">
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 200px; display: flex; align-items: flex-end;">
+                                <button class="btn btn--secondary" id="admin-connect-scanner-btn" style="width: 100%;">
+                                    🔌 RFID Scanner verbinden
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Snack Configuration -->
+                    <div class="admin-panel">
+                        <div class="admin-panel__header">
+                            <h3>🍫 Snack-Reihen konfigurieren</h3>
+                        </div>
+                        <div class="admin-panel__body">
+                            <table class="admin-table" aria-label="Snack-Konfiguration">
+                                <thead>
+                                    <tr>
+                                        <th style="width:100px;">Reihe</th>
+                                        <th>Produktname</th>
+                                        <th style="width:160px;">Preis</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-snack-tbody">
+                                    <!-- Filled by admin.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Drink Configuration -->
+                    <div class="admin-panel">
+                        <div class="admin-panel__header">
+                            <h3>🥤 Getränke konfigurieren</h3>
+                        </div>
+                        <div class="admin-panel__body">
+                            <table class="admin-table" aria-label="Getränke-Konfiguration">
+                                <thead>
+                                    <tr>
+                                        <th>Getränk</th>
+                                        <th style="width:160px;">Preis</th>
+                                        <th style="width:60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-drink-tbody">
+                                    <!-- Filled by admin.js -->
+                                </tbody>
+                            </table>
+                            <div class="add-drink-form">
+                                <div class="form-group">
+                                    <label for="admin-new-drink-name">Neues Getränk</label>
+                                    <input type="text" id="admin-new-drink-name" placeholder="Name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-new-drink-price">Preis</label>
+                                    <div class="price-input-wrapper">
+                                        <input type="number" id="admin-new-drink-price" placeholder="0.00" step="0.10"
+                                            min="0">
+                                        <span class="price-unit">€</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn--secondary" id="admin-add-drink-btn">
+                                    + Hinzufügen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking History -->
+                    <div class="admin-panel">
+                        <div class="admin-panel__header">
+                            <h3>📋 Buchungshistorie</h3>
+                        </div>
+                        <div class="admin-panel__body" id="admin-booking-history">
+                            <!-- Filled by admin.js -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+
+    </div><!-- /main-app -->
+
+    <!-- Scripts -->
+    <script src="js/store.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/scanner.js"></script>
+    <script src="js/snacks.js"></script>
+    <script src="js/drinks.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

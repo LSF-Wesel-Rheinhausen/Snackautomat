@@ -91,7 +91,7 @@ def login():
     url = _api_url + "interface/rest/auth/signin"
     #auth_secret = input('Enter auth_secret: ')
     accesstoken = get_access_token()
-    password = hashlib.md5(_api_password.encode()).hexdigest()
+    password = hashlib.md5(_api_password.encode(), usedforsecurity=False).hexdigest()
     payload = {
         'accesstoken': accesstoken,
         "username": _api_username,

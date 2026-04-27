@@ -10,6 +10,28 @@ def run(cmd: str) -> str:
         raise WifiError((proc.stderr or proc.stdout).strip())
     return proc.stdout.strip()
 
+def split_nmcli_terse(line: str, max_fields: int):
+    fields = []
+    current = []
+    escaped = False
+
+    for char in line:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == ":" and len(fields) < max_fields - 1:
+            fields.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+
+    if escaped:
+        current.append("\\")
+    fields.append("".join(current))
+    return (fields + [""] * max_fields)[:max_fields]
+
 def detect_wifi_iface() -> str:
     """
     Ermittelt das Wi-Fi-Interface über NetworkManager.
@@ -45,8 +67,7 @@ def list_wifi(iface: str | None = None):
     out = run(f"nmcli -t -f IN-USE,SSID,BSSID,SIGNAL,SECURITY device wifi list ifname {iface}")
     nets = []
     for line in out.splitlines():
-        parts = (line.split(":", maxsplit=4) + ["", "", "", "", ""])[:5]
-        inuse, ssid, bssid, signal, sec = parts
+        inuse, ssid, bssid, signal, sec = split_nmcli_terse(line, 5)
         if not ssid:
             continue
         nets.append({
@@ -58,7 +79,13 @@ def list_wifi(iface: str | None = None):
         })
     return nets
 
-def wifi_connect(ssid: str, password: str, iface: str | None = None, bssid: str | None = None):
+def wifi_connect(
+    ssid: str,
+    password: str,
+    iface: str | None = None,
+    bssid: str | None = None,
+    hidden: bool = False,
+):
     """
     Verbindet mit SSID. Optional BSSID pinnen.
     Legt das Profil an oder aktualisiert es.
@@ -67,6 +94,8 @@ def wifi_connect(ssid: str, password: str, iface: str | None = None, bssid: str 
     args = f'nmcli device wifi connect "{ssid}" password "{password}" ifname {iface}'
     if bssid:
         args += f" bssid {bssid}"
+    if hidden:
+        args += " hidden yes"
     run(args)
     return True
 

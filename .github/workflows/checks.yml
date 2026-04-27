@@ -1,0 +1,59 @@
+name: CI Checks
+
+on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+    paths:
+      - "Dockerfile"
+      - "broker/**"
+      - "local/backend/**"
+      - "frontend/**"
+      - ".github/workflows/checks.yml"
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "broker/**"
+      - "local/backend/**"
+      - "frontend/**"
+      - ".github/workflows/checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build-check:
+    name: Docker Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (validation only)
+        run: docker build --pull --no-cache -f Dockerfile -t snackautomat-ci:latest .
+
+  workflow-sanity:
+    name: Workflow Sanity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required files exist
+        run: |
+          test -f frontend/package.json
+          test -f frontend/package-lock.json
+          test -f broker/requirements.txt
+          test -f local/backend/requirements.txt
